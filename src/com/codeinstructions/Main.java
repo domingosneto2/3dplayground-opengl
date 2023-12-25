@@ -1,14 +1,17 @@
 package com.codeinstructions;
 
 import static com.codeinstructions.GLUtils.createShader;
+import static com.codeinstructions.GLUtils.ioResourceToByteBuffer;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL33C.*;
+import static org.lwjgl.stb.STBImage.stbi_load_from_memory;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.*;
 
 import java.io.IOException;
 import java.nio.*;
 
+import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFWFramebufferSizeCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.glfw.GLFWVidMode;
@@ -76,14 +79,17 @@ public class Main {
 
         // generate planet/cloud mesh
         float[] vertices = {
-                // positions         // colors
-                0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,   // bottom right
-                -0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,   // bottom left
-                0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f    // top
+                // positions          // colors           // texture coords
+                0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // top right
+                0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // bottom right
+                -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
+                -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // top left
         };
 
         int[] indices = {  // note that we start from 0!
-                0, 1, 2   // first triangle
+                0, 1, 3,   // first triangle
+                1, 2, 3
+
         };
         int vao = glGenVertexArrays();
         glBindVertexArray(vao);
@@ -93,10 +99,27 @@ public class Main {
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBufferData(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, 6 * 4, 0L);
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, 8 * 4, 0L);
         glEnableVertexAttribArray(0);
-        glVertexAttribPointer(1, 3, GL_FLOAT, false, 6 * 4, 3 * 4L);
+        glVertexAttribPointer(1, 3, GL_FLOAT, false, 8 * 4, 3 * 4L);
         glEnableVertexAttribArray(1);
+        glVertexAttribPointer(2, 2, GL_FLOAT, false, 8 * 4, 6 * 4L);
+        glEnableVertexAttribArray(2);
+
+        IntBuffer texWidth = BufferUtils.createIntBuffer(1);
+        IntBuffer texHeight = BufferUtils.createIntBuffer(1);
+        IntBuffer components = BufferUtils.createIntBuffer(1);
+        ByteBuffer data = stbi_load_from_memory(ioResourceToByteBuffer("container.jpg", 1024), texWidth, texHeight, components, 0);
+
+        int texture;
+        texture = glGenTextures();
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texWidth.get(), texHeight.get(), 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
 
         // set global GL state
         glClearColor(0.01f, 0.03f, 0.05f, 1.0f);
@@ -127,7 +150,7 @@ public class Main {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             glBindVertexArray(vao);
-            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+            glDrawElements(GL_TRIANGLES, 6  , GL_UNSIGNED_INT, 0);
             glfwSwapBuffers(window);
         }
         if (debugProc != null) {
