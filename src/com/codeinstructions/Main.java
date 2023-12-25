@@ -76,15 +76,14 @@ public class Main {
 
         // generate planet/cloud mesh
         float[] vertices = {
-                0.5f,  0.5f, 0.0f,  // top right
-                0.5f, -0.5f, 0.0f,  // bottom right
-                -0.5f, -0.5f, 0.0f,  // bottom left
-                -0.5f,  0.5f, 0.0f   // top left
+                // positions         // colors
+                0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,   // bottom right
+                -0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,   // bottom left
+                0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f    // top
         };
 
         int[] indices = {  // note that we start from 0!
-                0, 1, 3,   // first triangle
-                1, 2, 3    // second triangle
+                0, 1, 2   // first triangle
         };
         int vao = glGenVertexArrays();
         glBindVertexArray(vao);
@@ -94,8 +93,10 @@ public class Main {
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBufferData(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, 3 * 4, 0L);
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, 6 * 4, 0L);
         glEnableVertexAttribArray(0);
+        glVertexAttribPointer(1, 3, GL_FLOAT, false, 6 * 4, 3 * 4L);
+        glEnableVertexAttribArray(1);
 
         // set global GL state
         glClearColor(0.01f, 0.03f, 0.05f, 1.0f);
@@ -126,7 +127,7 @@ public class Main {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             glBindVertexArray(vao);
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
             glfwSwapBuffers(window);
         }
         if (debugProc != null) {
