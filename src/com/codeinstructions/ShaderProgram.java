@@ -15,8 +15,8 @@ public class ShaderProgram {
 
     public void loadFromResources(String vertexShader, String fragmentShader) throws IOException {
         program = glCreateProgram();
-        vshader = createShader("shader/vertex.vs", GL_VERTEX_SHADER);
-        fshader = createShader("shader/fragment.fs", GL_FRAGMENT_SHADER);
+        vshader = createShader(vertexShader, GL_VERTEX_SHADER);
+        fshader = createShader(fragmentShader, GL_FRAGMENT_SHADER);
         glAttachShader(program, vshader);
         glAttachShader(program, fshader);
         glLinkProgram(program);

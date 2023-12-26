@@ -2,23 +2,19 @@ package com.codeinstructions;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL33C.*;
-import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.*;
 
 import java.io.IOException;
-import java.nio.*;
 
-import com.codeinstructions.models.Square;
+import com.codeinstructions.models.Cube;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFWFramebufferSizeCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.*;
 import org.lwjgl.system.*;
 
-/**
- * Basic triangle
- */
 public class Main {
     private static int width = 800;
     private static int height = 600;
@@ -34,7 +30,7 @@ public class Main {
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
-        long window = glfwCreateWindow(width, height, "Hello, Planet!", NULL, NULL);
+        long window = glfwCreateWindow(width, height, "3D Playground!", NULL, NULL);
         if (window == NULL) {
             throw new AssertionError("Failed to create the GLFW window");
         }
@@ -54,20 +50,16 @@ public class Main {
 
         glfwSetKeyCallback(window, keyCallback = new GLFWKeyCallback() {
             public void invoke(long window, int key, int scancode, int action, int mods) {
-                if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE)
+                if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) {
                     glfwSetWindowShouldClose(window, true);
+                    return;
+                }
+
             }
         });
 
         GLFWVidMode vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
         glfwSetWindowPos(window, (vidmode.width() - width) / 2, (vidmode.height() - height) / 2);
-
-        try (MemoryStack frame = stackPush()) {
-            IntBuffer framebufferSize = frame.mallocInt(2);
-            nglfwGetFramebufferSize(window, memAddress(framebufferSize), memAddress(framebufferSize) + 4);
-            width = framebufferSize.get(0);
-            height = framebufferSize.get(1);
-        }
 
         glfwMakeContextCurrent(window);
         glfwSwapInterval(1);
@@ -75,7 +67,7 @@ public class Main {
         GL.createCapabilities();
         debugProc = GLUtil.setupDebugMessageCallback();
 
-        Mesh mesh = Square.mesh();
+        Mesh mesh = Cube.mesh();
 
         mesh.bindBuffers();
 
@@ -99,25 +91,54 @@ public class Main {
 
         // set global GL state
         glClearColor(0.01f, 0.03f, 0.05f, 1.0f);
+        glEnable(GL_DEPTH_TEST);
 
-        Matrix4f transform = new Matrix4f();
-        //transform = transform.translate(1.0f, 1.0f, 1.0f);
+        Vector3f[] cubePositions = {
+                new Vector3f( 0.0f,  0.0f,  0.0f),
+                new Vector3f( 2.0f,  5.0f, -15.0f),
+                new Vector3f(-1.5f, -2.2f, -2.5f),
+                new Vector3f(-3.8f, -2.0f, -12.3f),
+                new Vector3f( 2.4f, -0.4f, -3.5f),
+                new Vector3f(-1.7f,  3.0f, -7.5f),
+                new Vector3f( 1.3f, -2.0f, -2.5f),
+                new Vector3f( 1.5f,  2.0f, -2.5f),
+                new Vector3f( 1.5f,  0.2f, -1.5f),
+                new Vector3f(-1.3f,  1.0f, -1.5f)
+        };
 
         while (!glfwWindowShouldClose(window)) {
             glfwPollEvents();
 
-            transform = transform.identity();
-            transform = transform.rotate((float)glfwGetTime(), 0, 0, 1);
-            transform = transform.scale(0.5f, 0.5f, 0.5f);
-
-            program.setMatrix("transform", transform);
+            processInput(window);
 
             glViewport(0, 0, width, height);
             glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            //glBindVertexArray(vao);
-            glDrawElements(GL_TRIANGLES, 6  , GL_UNSIGNED_INT, 0);
+            Matrix4f view = new Matrix4f().identity();
+            view = view.translate(0, 0, -3);
+
+            Matrix4f projection = new Matrix4f();
+            projection.perspective((float)Math.toRadians(45), (float)width/(float)height, 0.1f, 100f);
+
+
+            program.setMatrix("projection", projection);
+            program.setMatrix("view", view);
+
+            for (int i = 0; i < cubePositions.length; i++) {
+                Matrix4f model = new Matrix4f();
+                model = model.translate(cubePositions[i]);
+                float angle = 20f * i;
+                model = model.rotate((float)Math.toRadians(angle), new Vector3f(1f, 0.3f, 0.5f).normalize());
+                program.setMatrix("model", model);
+
+                if (mesh.hasIndices()) {
+                    glDrawElements(GL_TRIANGLES, mesh.getNumIndices(), GL_UNSIGNED_INT, 0);
+                } else {
+                    glDrawArrays(GL_TRIANGLES, 0, mesh.getNumVertices());
+                }
+
+            }
             glfwSwapBuffers(window);
         }
         if (debugProc != null) {
@@ -129,6 +150,10 @@ public class Main {
         //glDeleteBuffers(vbo);
         program.deleteProgram();
         glfwDestroyWindow(window);
+    }
+
+    private static void processInput(long window) {
+
     }
 
 }

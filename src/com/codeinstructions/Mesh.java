@@ -70,4 +70,16 @@ public class Mesh {
             texCoordIndex = nextIndex;
         }
     }
+
+    public boolean hasIndices() {
+        return indices != null;
+    }
+
+    public int getNumVertices() {
+        return vertices.length / (vertexSize + colorSize + texCoordSize);
+    }
+
+    public int getNumIndices() {
+        return indices == null ? 0 : indices.length;
+    }
 }
