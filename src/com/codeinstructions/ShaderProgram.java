@@ -1,5 +1,7 @@
 package com.codeinstructions;
 
+import org.joml.Matrix4f;
+
 import java.io.IOException;
 
 import static com.codeinstructions.GLUtils.createShader;
@@ -38,5 +40,10 @@ public class ShaderProgram {
 
     public void setInt(String name, int value) {
         glUniform1i(glGetUniformLocation(program, name), value);
+    }
+
+    public void setMatrix(String name, Matrix4f matrix) {
+        float[] buffer = new float[16];
+        glUniformMatrix4fv(glGetUniformLocation(program, name), false, matrix.get(buffer));
     }
 }

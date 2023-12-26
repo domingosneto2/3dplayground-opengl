@@ -8,6 +8,8 @@ import static org.lwjgl.system.MemoryUtil.*;
 import java.io.IOException;
 import java.nio.*;
 
+import com.codeinstructions.models.Square;
+import org.joml.Matrix4f;
 import org.lwjgl.glfw.GLFWFramebufferSizeCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.glfw.GLFWVidMode;
@@ -73,20 +75,8 @@ public class Main {
         GL.createCapabilities();
         debugProc = GLUtil.setupDebugMessageCallback();
 
-        float[] vertices = {
-                // positions          // colors           // texture coords
-                0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // top right
-                0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // bottom right
-                -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
-                -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // top left
-        };
+        Mesh mesh = Square.mesh();
 
-        int[] indices = {  // note that we start from 0!
-                0, 1, 3,   // first triangle
-                1, 2, 3
-
-        };
-        Mesh mesh = new Mesh(vertices, indices, 3, 3, 2);
         mesh.bindBuffers();
 
         Texture texture = new Texture();
@@ -110,8 +100,17 @@ public class Main {
         // set global GL state
         glClearColor(0.01f, 0.03f, 0.05f, 1.0f);
 
+        Matrix4f transform = new Matrix4f();
+        //transform = transform.translate(1.0f, 1.0f, 1.0f);
+
         while (!glfwWindowShouldClose(window)) {
             glfwPollEvents();
+
+            transform = transform.identity();
+            transform = transform.rotate((float)glfwGetTime(), 0, 0, 1);
+            transform = transform.scale(0.5f, 0.5f, 0.5f);
+
+            program.setMatrix("transform", transform);
 
             glViewport(0, 0, width, height);
             glClearColor(0.2f, 0.3f, 0.3f, 1.0f);

@@ -21,8 +21,6 @@ public class Mesh {
     int vbo;
     int ebo;
 
-    int vertexIndex;
-
     int colorIndex = -1;
 
     int texCoordIndex = -1;
@@ -36,13 +34,24 @@ public class Mesh {
         this.texCoordSize = texCoordSize;
     }
 
+    public Mesh(float[] vertices, int vertexSize, int colorSize, int texCoordSize) {
+        this.vertices = vertices;
+        this.vertexSize = vertexSize;
+        this.colorSize = colorSize;
+        this.texCoordSize = texCoordSize;
+    }
+
     public void bindBuffers() {
         vao = glGenVertexArrays();
         glBindVertexArray(vao);
         vbo = glGenBuffers();
-        ebo = glGenBuffers();
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW);
+
+        if (indices != null) {
+            ebo = glGenBuffers();
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW);
+        }
+
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBufferData(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW);
         int stride = vertexSize + colorSize + texCoordSize;
