@@ -1,7 +1,5 @@
 package com.codeinstructions.models;
 
-import com.codeinstructions.Mesh;
-
 public class Square {
     public static Mesh mesh() {
         float[] vertices = {
@@ -17,7 +15,7 @@ public class Square {
                 1, 2, 3
 
         };
-        Mesh mesh = new Mesh(vertices, indices, 3, 3, 2);
+        Mesh mesh = new Mesh(vertices, indices, 3, 0, 3, 2, true);
         return mesh;
     }
 }

@@ -6,9 +6,10 @@ import static org.lwjgl.system.MemoryUtil.*;
 
 import java.io.IOException;
 
-import com.codeinstructions.models.Cube;
+import com.codeinstructions.models.*;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import org.joml.Vector4f;
 import org.lwjgl.glfw.GLFWFramebufferSizeCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.glfw.GLFWVidMode;
@@ -18,6 +19,13 @@ import org.lwjgl.system.*;
 public class Main {
     private static int width = 800;
     private static int height = 600;
+
+    private static Camera camera = new Camera();
+
+    private static Model model = new Geodesic(1);
+    private static Mesh newMesh = model.mesh();
+
+    private static Mesh mesh;
 
     public static void main(String[] args) throws IOException {
         if (!glfwInit())
@@ -54,6 +62,15 @@ public class Main {
                     glfwSetWindowShouldClose(window, true);
                     return;
                 }
+                if (key == GLFW_KEY_LEFT_BRACKET && action == GLFW_PRESS) {
+                    model.decreaseDetail();
+                    newMesh = model.mesh();
+                }
+
+                if (key == GLFW_KEY_RIGHT_BRACKET && action == GLFW_PRESS) {
+                    model.increaseDetail();
+                    newMesh = model.mesh();
+                }
 
             }
         });
@@ -67,10 +84,6 @@ public class Main {
         GL.createCapabilities();
         debugProc = GLUtil.setupDebugMessageCallback();
 
-        Mesh mesh = Cube.mesh();
-
-        mesh.bindBuffers();
-
         Texture texture = new Texture();
         texture.loadTexture("container.jpg", GL_RGB);
 
@@ -83,15 +96,17 @@ public class Main {
 
         // create shader
         ShaderProgram program = new ShaderProgram();
-        program.loadFromResources("shader/vertex.vs", "shader/fragment.fs");
+        //program.loadFromResources("shader/lightingp.vs", "shader/lightingp.fs");
+        program.loadFromResources("shader/lighting.vs", "shader/lighting.fs");
         program.useProgram();
 
         program.setInt("texture1", 0);
         program.setInt("texture2", 1);
 
         // set global GL state
-        glClearColor(0.01f, 0.03f, 0.05f, 1.0f);
+        glClearColor(0f, 0f, 0f, 1.0f);
         glEnable(GL_DEPTH_TEST);
+        glEnable(GL_CULL_FACE);
 
         Vector3f[] cubePositions = {
                 new Vector3f( 0.0f,  0.0f,  0.0f),
@@ -106,17 +121,37 @@ public class Main {
                 new Vector3f(-1.3f,  1.0f, -1.5f)
         };
 
+        Vector3f color = new Vector3f(1, 1, 1);
+        Vector3f lightPos = new Vector3f(5, 5, 5);
+        Vector3f lightColor = new Vector3f(1, 1, 1);
+        Vector3f ambientColor = new Vector3f(lightColor).mul(0.2f);
+
+        program.setVector3("color", color);
+        program.setVector3("lightPos", lightPos);
+        program.setVector3("lightColor", lightColor);
+        program.setVector3("ambientColor", ambientColor);
+
+
         while (!glfwWindowShouldClose(window)) {
+            if (mesh != null && mesh != newMesh) {
+                mesh.releaseBuffers();
+            }
+
+            mesh = newMesh;
+            if (!mesh.bound()) {
+                mesh.bindBuffers();
+                System.out.println("Vertices: " + mesh.getNumVertices());
+            }
+
             glfwPollEvents();
 
             processInput(window);
 
             glViewport(0, 0, width, height);
-            glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+            glClearColor(0f, 0f, 0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            Matrix4f view = new Matrix4f().identity();
-            view = view.translate(0, 0, -3);
+            Matrix4f view = camera.view();
 
             Matrix4f projection = new Matrix4f();
             projection.perspective((float)Math.toRadians(45), (float)width/(float)height, 0.1f, 100f);
@@ -126,11 +161,13 @@ public class Main {
             program.setMatrix("view", view);
 
             for (int i = 0; i < cubePositions.length; i++) {
-                Matrix4f model = new Matrix4f();
-                model = model.translate(cubePositions[i]);
+                Matrix4f modelTransform = new Matrix4f();
+                modelTransform = modelTransform.translate(cubePositions[i]);
                 float angle = 20f * i;
-                model = model.rotate((float)Math.toRadians(angle), new Vector3f(1f, 0.3f, 0.5f).normalize());
-                program.setMatrix("model", model);
+                modelTransform = modelTransform.rotate((float)Math.toRadians(angle), new Vector3f(1f, 0.3f, 0.5f).normalize());
+                program.setMatrix("model", modelTransform);
+                Matrix4f normal = new Matrix4f(modelTransform).normal();
+                program.setMatrix("normal", normal);
 
                 if (mesh.hasIndices()) {
                     glDrawElements(GL_TRIANGLES, mesh.getNumIndices(), GL_UNSIGNED_INT, 0);
@@ -146,14 +183,38 @@ public class Main {
         }
         keyCallback.free();
         fbCallback.free();
-        //glDeleteVertexArrays(vao);
-        //glDeleteBuffers(vbo);
+        mesh.releaseBuffers();
         program.deleteProgram();
         glfwDestroyWindow(window);
     }
 
-    private static void processInput(long window) {
+    private static Vector3f from(Vector4f v) {
+        return new Vector3f(v.x, v.y, v.z);
+    }
 
+    static float lastTime = 0;
+
+    private static void processInput(long window) {
+        float speed = 0.4f;
+        float time = (float)glfwGetTime();
+        float deltaTime = time - lastTime;
+        lastTime = time;
+
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+            camera.forward(speed * deltaTime);
+        }
+
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+            camera.back(speed * deltaTime);
+        }
+
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+            camera.moveLeft(speed * deltaTime);
+        }
+
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+            camera.moveRight(speed * deltaTime);
+        }
     }
 
 }
