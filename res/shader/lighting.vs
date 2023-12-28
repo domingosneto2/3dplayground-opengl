@@ -8,10 +8,10 @@ uniform mat4 view;
 uniform mat4 projection;
 uniform mat4 normal;
 
-uniform vec3 color;
+uniform vec4 color;
 uniform vec3 lightPos;
-uniform vec3 lightColor;
-uniform vec3 ambientColor;
+uniform vec4 lightColor;
+uniform vec4 ambientColor;
 
 out vec4 MyColor;
 
@@ -20,9 +20,10 @@ void main()
     gl_Position = projection * view * model * vec4(aPos, 1.0);
     vec3 vertPos = vec3(model * vec4(aPos, 1));
     vec3 norm = normalize(vec3(normal * vec4(aNormal, 0)));
+    float lightDist = length(lightPos - vertPos);
     vec3 lightDir = normalize(lightPos - vertPos);
     float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse =diff * lightColor;
-    vec3 result = (ambientColor + diffuse) * color;
-    MyColor = vec4(result, 1.0);
+    vec4 diffuse =diff * lightColor * 1 / lightDist;
+    vec4 result = (ambientColor + diffuse) * color;
+    MyColor = vec4(result.xyz, 1.0);
 }

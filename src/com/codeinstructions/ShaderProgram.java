@@ -1,7 +1,6 @@
 package com.codeinstructions;
 
-import org.joml.Matrix4f;
-import org.joml.Vector3f;
+import org.joml.*;
 
 import java.io.IOException;
 
@@ -43,12 +42,20 @@ public class ShaderProgram {
         glUniform1i(glGetUniformLocation(program, name), value);
     }
 
+    public void setFloat(String name, float value) {
+        glUniform1f(glGetUniformLocation(program, name), value);
+    }
+
     public void setMatrix(String name, Matrix4f matrix) {
         float[] buffer = new float[16];
         glUniformMatrix4fv(glGetUniformLocation(program, name), false, matrix.get(buffer));
     }
 
-    public void setVector3(String name, Vector3f value) {
-        glUniform3f(glGetUniformLocation(program, name), value.x, value.y, value.z);
+    public void setVector3(String name, Vector3fc value) {
+        glUniform3f(glGetUniformLocation(program, name), value.x(), value.y(), value.z());
+    }
+
+    public void setVector4(String name, Vector4fc value) {
+        glUniform4f(glGetUniformLocation(program, name), value.x(), value.y(), value.z(), value.w());
     }
 }
