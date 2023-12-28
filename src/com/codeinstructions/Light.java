@@ -1,16 +1,19 @@
 package com.codeinstructions;
 
+import com.codeinstructions.models.Model;
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
+import org.joml.Vector4fc;
 
 public class Light {
     private Vector3f position;
 
-    private Vector4f diffuseColor;
+    private Vector4fc diffuseColor;
 
-    private Vector4f ambientColor;
+    private Vector4fc ambientColor;
 
-    private Vector4f specularColor;
+    private Vector4fc specularColor;
 
     private float diffusePower;
 
@@ -26,7 +29,13 @@ public class Light {
 
     private boolean on = true;
 
-    public Light(Vector3f position, Vector4f diffuseColor, Vector4f ambientColor, Vector4f specularColor, float diffusePower, float specularPower, float ambientPower, float constant, float linear, float quadratic) {
+    private Model model;
+
+    private Matrix4f modelTransform;
+
+    public Light(Vector3f position, Vector4fc diffuseColor, Vector4fc ambientColor, Vector4fc specularColor,
+                 float diffusePower, float specularPower, float ambientPower, float constant, float linear,
+                 float quadratic, Model model, Matrix4f modelTransform) {
         this.position = position;
         this.diffuseColor = diffuseColor;
         this.ambientColor = ambientColor;
@@ -37,6 +46,8 @@ public class Light {
         this.constant = constant;
         this.linear = linear;
         this.quadratic = quadratic;
+        this.model = model;
+        this.modelTransform = modelTransform;
     }
 
     public Vector3f getPosition() {
@@ -47,27 +58,27 @@ public class Light {
         this.position = position;
     }
 
-    public Vector4f getDiffuseColor() {
+    public Vector4fc getDiffuseColor() {
         return diffuseColor;
     }
 
-    public void setDiffuseColor(Vector4f diffuseColor) {
+    public void setDiffuseColor(Vector4fc diffuseColor) {
         this.diffuseColor = diffuseColor;
     }
 
-    public Vector4f getAmbientColor() {
+    public Vector4fc getAmbientColor() {
         return ambientColor;
     }
 
-    public void setAmbientColor(Vector4f ambientColor) {
+    public void setAmbientColor(Vector4fc ambientColor) {
         this.ambientColor = ambientColor;
     }
 
-    public Vector4f getSpecularColor() {
+    public Vector4fc getSpecularColor() {
         return specularColor;
     }
 
-    public void setSpecularColor(Vector4f specularColor) {
+    public void setSpecularColor(Vector4fc specularColor) {
         this.specularColor = specularColor;
     }
 
@@ -117,6 +128,14 @@ public class Light {
 
     public void setQuadratic(float quadratic) {
         this.quadratic = quadratic;
+    }
+
+    public Model getModel() {
+        return model;
+    }
+
+    public Matrix4f getModelTransform() {
+        return modelTransform;
     }
 
     public void toogle() {

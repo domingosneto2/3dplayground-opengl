@@ -3,6 +3,7 @@ package com.codeinstructions.models;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
+import org.joml.Vector4fc;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +32,14 @@ public class PolygonMesh {
     }
 
     public PolygonMesh translate(Vector3f v) {
+        PolygonMesh newMesh = new PolygonMesh(concave);
+        for (Polygon polygon : polygons) {
+            newMesh.polygons.add(polygon.translate(v.x, v.y, v.z));
+        }
+        return newMesh;
+    }
+
+    public PolygonMesh translate(Vector4f v) {
         PolygonMesh newMesh = new PolygonMesh(concave);
         for (Polygon polygon : polygons) {
             newMesh.polygons.add(polygon.translate(v.x, v.y, v.z));
@@ -77,40 +86,36 @@ public class PolygonMesh {
         }
     }
 
-    public void polygon(Vector4f ... vertices) {
+    public void polygon(Vector4fc ... vertices) {
         Polygon polygon = new Polygon(vertices);
-        add(polygon);
-    }
-
-    public void polygon(Vector4f material, Vector4f ... vertices) {
-        Polygon polygon = new Polygon(vertices);
-        polygon.setMaterial(material);
         add(polygon);
     }
 
     public float[] getVerticesArray() {
-        int numVertices = getNumVertices();
+        List<Polygon> triangles = tesselate();
+        int numVertices = triangles.stream().mapToInt(Polygon::getNumVertices).sum();
+
         float[] vertices = new float[numVertices * 6];
         int count = 0;
-        for (Polygon polygon : polygons) {
-            List<Vector4f> polygonVertices = polygon.getVertices();
-            List<Vector4f> vertexNormals = polygon.getVertexNormals();
-            Vector4f normal = null;
+        for (Polygon polygon : triangles) {
+            List<? extends Vector4fc> polygonVertices = polygon.getVertices();
+            List<? extends Vector4fc> vertexNormals = polygon.getVertexNormals();
+            Vector4fc normal = null;
             if (vertexNormals == null || vertexNormals.isEmpty()) {
                 normal = polygon.normal();
             }
 
             for (int i = 0; i < polygonVertices.size(); i++) {
-                Vector4f vertex = polygonVertices.get(i);
-                vertices[count] = vertex.x;
-                vertices[count + 1] = vertex.y;
-                vertices[count + 2] = vertex.z;
+                Vector4fc vertex = polygonVertices.get(i);
+                vertices[count] = vertex.x();
+                vertices[count + 1] = vertex.y();
+                vertices[count + 2] = vertex.z();
 
-                Vector4f vertexNormal = normal != null ? normal : vertexNormals.get(i);
+                Vector4fc vertexNormal = normal != null ? normal : vertexNormals.get(i);
 
-                vertices[count + 3] = vertexNormal.x;
-                vertices[count + 4] = vertexNormal.y;
-                vertices[count + 5] = vertexNormal.z;
+                vertices[count + 3] = vertexNormal.x();
+                vertices[count + 4] = vertexNormal.y();
+                vertices[count + 5] = vertexNormal.z();
                 count += 6;
             }
 
@@ -118,7 +123,16 @@ public class PolygonMesh {
         return vertices;
     }
 
-    private int getNumVertices() {
-        return polygons.stream().mapToInt(Polygon::getNumVertices).sum();
+    private List<Polygon> tesselate() {
+        List<Polygon> result = new ArrayList<>();
+
+        for (Polygon polygon : polygons) {
+            if (polygon.getNumVertices() == 3) {
+                result.add(polygon);
+            } else {
+                polygon.tesselate(result);
+            }
+        }
+        return result;
     }
 }

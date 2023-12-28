@@ -1,8 +1,6 @@
 package com.codeinstructions;
 
-import com.codeinstructions.models.Geodesic;
 import com.codeinstructions.models.Mesh;
-import com.codeinstructions.models.Model;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL;
 
@@ -14,12 +12,6 @@ import static org.lwjgl.opengl.GL13C.GL_TEXTURE1;
 import static org.lwjgl.opengl.GL30.GL_FRAMEBUFFER_SRGB;
 
 public class Renderer {
-
-    private Model model = new Geodesic(4);
-    private Mesh newMesh = model.mesh();
-
-    private Mesh mesh;
-
     private int width;
 
     private int height;
@@ -69,18 +61,8 @@ public class Renderer {
     }
 
     public void render(Scene scene) {
-        if (mesh != null && mesh != newMesh) {
-            mesh.releaseBuffers();
-        }
-
-        mesh = newMesh;
-        if (!mesh.bound()) {
-            mesh.bindBuffers();
-            System.out.println("Vertices: " + mesh.getNumVertices());
-        }
-
         glViewport(0, 0, width, height);
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClearColor(0, 0, 0, 0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         Matrix4f view = scene.getCamera().view();
@@ -129,11 +111,18 @@ public class Renderer {
     private void renderPointLight(Light light, Matrix4f projection, Matrix4f view) {
         Matrix4f modelTransform = new Matrix4f();
         modelTransform.translate(light.getPosition());
-        modelTransform.scale(0.2f);
+        modelTransform.mul(light.getModelTransform());
         lightSourceProgram.setMatrix("model", modelTransform);
         lightSourceProgram.setVector4("lightColor", light.getDiffuseColor());
         lightSourceProgram.setMatrix("projection", projection);
         lightSourceProgram.setMatrix("view", view);
+
+        Mesh mesh = light.getModel().mesh();
+        if (!mesh.initialized()) {
+            mesh.initializeBuffers();
+        }
+
+        mesh.bind();
 
         if (mesh.hasIndices()) {
             glDrawElements(GL_TRIANGLES, mesh.getNumIndices(), GL_UNSIGNED_INT, 0);
@@ -143,9 +132,7 @@ public class Renderer {
     }
 
     private void renderObject(GameObject gameObject) {
-        Matrix4f modelTransform = new Matrix4f();
-
-        modelTransform = modelTransform.translate(gameObject.getPos());
+        Matrix4f modelTransform = gameObject.getTransform();
 
         program.setMatrix("model", modelTransform);
         Matrix4f normal = new Matrix4f(modelTransform).normal();
@@ -157,6 +144,10 @@ public class Renderer {
         program.setFloat("specularStrength", material.getSpecularStrength());
         program.setFloat("specularFactor", material.getSpecularFactor());
 
+        Mesh mesh = gameObject.mesh();
+
+        mesh.bind();
+
         if (mesh.hasIndices()) {
             glDrawElements(GL_TRIANGLES, mesh.getNumIndices(), GL_UNSIGNED_INT, 0);
         } else {
@@ -165,18 +156,8 @@ public class Renderer {
     }
 
     public void clear() {
-        mesh.releaseBuffers();
         program.deleteProgram();
-    }
-
-    public void decreaseDetail() {
-        model.decreaseDetail();
-        newMesh = model.mesh();
-    }
-
-    public void increaseDetail() {
-        model.increaseDetail();
-        newMesh = model.mesh();
+        lightSourceProgram.deleteProgram();
     }
 
     public int getWidth() {

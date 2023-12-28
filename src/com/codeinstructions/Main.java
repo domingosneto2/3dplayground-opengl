@@ -5,13 +5,15 @@ import static org.lwjgl.system.MemoryUtil.*;
 
 import java.io.IOException;
 
+import com.codeinstructions.models.ModelCatalog;
 import org.lwjgl.glfw.GLFWFramebufferSizeCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 
 public class Main {
 
-    static Scene scene = new Scene();
+    static ModelCatalog modelCatalog = new ModelCatalog();
+    static Scene scene = new Scene(modelCatalog);
     static Renderer renderer = new Renderer(800, 600);
 
 
@@ -50,11 +52,11 @@ public class Main {
                     return;
                 }
                 if (key == GLFW_KEY_LEFT_BRACKET && action == GLFW_PRESS) {
-                    renderer.decreaseDetail();
+                    scene.decreaseDetail();
                 }
 
                 if (key == GLFW_KEY_RIGHT_BRACKET && action == GLFW_PRESS) {
-                    renderer.increaseDetail();
+                    scene.increaseDetail();
                 }
 
                 if (key == GLFW_KEY_N && action == GLFW_PRESS) {
@@ -71,6 +73,10 @@ public class Main {
 
                 if (key == GLFW_KEY_COMMA && action == GLFW_PRESS) {
                     scene.decreaseLightPower();
+                }
+
+                if (key == GLFW_KEY_I && action == GLFW_PRESS) {
+                    scene.resetSpikeLength();
                 }
 
             }

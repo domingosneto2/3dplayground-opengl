@@ -1,6 +1,10 @@
 package com.codeinstructions;
 
+import com.codeinstructions.models.Angle;
 import com.codeinstructions.models.Color;
+import com.codeinstructions.models.Model;
+import com.codeinstructions.models.ModelCatalog;
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import org.joml.Vector4fc;
@@ -21,13 +25,22 @@ public class Scene {
 
     private float deltaTime;
 
+    // hacky hacky hacky
+    private float spikeLength;
 
-    public Scene() {
+    private ModelCatalog modelCatalog;
 
+
+    public Scene(ModelCatalog modelCatalog) {
+        this.modelCatalog = modelCatalog;
     }
 
-    public void addObject(Vector3f position, Material material) {
-        objects.add(new GameObject(position, material));
+    public void addObject(Vector3f position, Material material, Model model) {
+        objects.add(new GameObject(position, material, model));
+    }
+
+    public void addObject(Matrix4f transform, Material material, Model model) {
+        objects.add(new GameObject(transform, material, model));
     }
 
     public List<GameObject> getObjects() {
@@ -40,20 +53,25 @@ public class Scene {
 
     public void init() {
 
+
+
         Vector3f light1Pos = new Vector3f(10, 10, 10);
         Vector3f light2Pos = new Vector3f(-10, 5, -10);
         Vector4f lightColor = new Vector4f(1, 1, 1, 1);
-        Vector4f ambientColor = new Vector4f(lightColor).mul(0.02f);
+        Vector4f ambientColor = new Vector4f(lightColor).mul(0.1f);
 
         camera = new Camera();
-        camera.forward(-20f);
-        lights.add(new Light(light1Pos, lightColor, ambientColor, lightColor, 1f, 1f, 1f, 1f, 0.09f, 0.032f));
-        lights.add(new Light(light2Pos, lightColor, new Vector4f(0, 0, 0, 0), lightColor, 1, 1, 1f, 1,0.09f, 0.032f));
+        camera.moveUp(2);
+        camera.lookDown(Angle.toRadians(30));
+        camera.back(10);
+
+        createLight(light1Pos, lightColor, ambientColor, lightColor,10f, 1f, 1f, 1f, 0.3f, 0.1f);
+        createLight(light2Pos, lightColor, Color.BLACK, lightColor,5f, 1f, 1f, 1f, 0.3f, 0.1f);
 
         float[] specularStrengths = {0.1f, 0.2f, 0.5f, 0.8f, 1f};
         float[] specularFactors = {2, 4, 8, 16, 32, 64, 128, 256};
 
-        float step = 3f;
+        float step = 1.5f;
 
         Vector4fc[] colors = {Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW, Color.CYAN, Color.MAGENTA, Color.WHITE, Color.BLACK};
 
@@ -61,20 +79,48 @@ public class Scene {
         for (int i = 0; i < 12; i++) {
             for (int j = 0; j < 12; j++) {
                 float startX = -step * 11 / 2f;
-                float startY = step * 11 / 2f;
+                float startY = -step * 11 / 2f;
 
                 float x = startX + step * i;
-                float y = startY - step * j;
+                float y = startY + step * j;
 
-                Vector3f pos = new Vector3f(y, -5, x - 12);
+                Vector3f pos = new Vector3f(x, 0.5f, y);
                 Material material = new Material(colors[random.nextInt(colors.length)], specularStrengths[random.nextInt(specularStrengths.length)], specularFactors[random.nextInt(specularFactors.length)]);
-                addObject(pos, material);
+                addObject(pos, material, modelCatalog.geodesic());
             }
         }
+
+
+        Material floorMat = new Material(Color.GREEN.mul(0.5f, new Vector4f()), 0.5f, 32);
+        Matrix4f floorTransform = new Matrix4f().identity()
+                .rotateX(Angle.toRadians(-90))
+                .scale(30, 30, 1);
+
+        addObject(floorTransform, floorMat, modelCatalog.rectangle());
+
 
         for (Light light : lights) {
             light.getPosition().x /= 3f;
         }
+    }
+
+    private void createLight(Vector3f light1Pos, Vector4fc lightColor, Vector4fc ambientColor, Vector4fc specularColor,
+                             float diffusePower, float specularPower, float ambientPower, float attenuationConstant,
+                             float attenuationLinear, float attenuationQuadratic) {
+        Matrix4f transform = new Matrix4f().identity().scale(0.2f);
+        Model model = modelCatalog.geodesic();
+        lights.add(new Light(light1Pos, lightColor, ambientColor, specularColor, diffusePower, specularPower,
+                ambientPower, attenuationConstant, attenuationLinear, attenuationQuadratic, model, transform));
+    }
+
+    public void update() {
+        for (Light light : lights) {
+            light.getPosition().x *= 3f;
+            light.getPosition().rotateY(0.5f * deltaTime);
+            light.getPosition().x /= 3f;
+        }
+
+
     }
 
     public void setTime(double time) {
@@ -143,13 +189,13 @@ public class Scene {
         if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
             camera.rotateRight(turningSpeed * deltaTime);
         }
-    }
 
-    public void update() {
-        for (Light light : lights) {
-            light.getPosition().x *= 3f;
-            light.getPosition().rotateY(0.5f * deltaTime);
-            light.getPosition().x /= 3f;
+        if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
+            spikeLength += 0.1f * deltaTime;
+        }
+
+        if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) {
+            spikeLength -= 0.1f * deltaTime;
         }
     }
 
@@ -170,6 +216,26 @@ public class Scene {
     public void decreaseLightPower() {
         for (Light light : lights) {
             light.decreasePower();
+        }
+    }
+
+    public void resetSpikeLength() {
+        spikeLength = 0;
+    }
+
+    public float getSpikeLength() {
+        return spikeLength;
+    }
+
+    public void decreaseDetail() {
+        for (GameObject object : objects) {
+            object.getModel().decreaseDetail();
+        }
+    }
+
+    public void increaseDetail() {
+        for (GameObject object : objects) {
+            object.getModel().increaseDetail();
         }
     }
 }

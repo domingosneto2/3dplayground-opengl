@@ -32,7 +32,7 @@ public class Mesh {
 
     boolean concave;
 
-    boolean bound;
+    boolean initialized;
 
 
 
@@ -55,7 +55,7 @@ public class Mesh {
         this.concave = concave;
     }
 
-    public void bindBuffers() {
+    public void initializeBuffers() {
         vao = glGenVertexArrays();
         glBindVertexArray(vao);
         vbo = glGenBuffers();
@@ -95,7 +95,7 @@ public class Mesh {
             texCoordIndex = nextIndex;
         }
 
-        bound = true;
+        initialized = true;
     }
 
     public void releaseBuffers() {
@@ -104,6 +104,10 @@ public class Mesh {
         if (indices != null) {
             glDeleteBuffers(ebo);
         }
+    }
+
+    public void bind() {
+        glBindVertexArray(vao);
     }
 
     public boolean hasIndices() {
@@ -140,7 +144,7 @@ public class Mesh {
         }
     }
 
-    public boolean bound() {
-        return bound;
+    public boolean initialized() {
+        return initialized;
     }
 }

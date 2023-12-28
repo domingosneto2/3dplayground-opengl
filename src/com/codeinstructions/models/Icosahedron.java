@@ -18,7 +18,7 @@ public class Icosahedron extends BaseModel {
     protected PolygonMesh computeMesh() {
         PolygonMesh mesh = new PolygonMesh(true);
 
-        Vector4f north = new Vector4f(Vertex.K);
+        Vector4f north = new Vector4f(Vertex.K).mul(0.5f);
         Vector4f south = new Vector4f(north).mul(-1);
 
         List<Vector4f> layer1 = new ArrayList<>();
