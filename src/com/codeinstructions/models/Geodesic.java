@@ -1,10 +1,11 @@
 package com.codeinstructions.models;
 
-import org.joml.Vector3f;
-import org.joml.Vector4f;
-import org.joml.Vector4fc;
+import org.joml.*;
 
+import java.lang.Math;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class Geodesic extends BaseModel {
 
@@ -33,8 +34,103 @@ public class Geodesic extends BaseModel {
             splitGeodesicFace(polygon, geodesic, level);
         }
 
+        computeTextureCoords(geodesic);
+
         return geodesic;
 
+    }
+
+    private void computeTextureCoords(PolygonMesh geodesic) {
+        for (Polygon polygon : geodesic.getPolygons()) {
+            List<Vector2f> textCoords = new ArrayList<>();
+            List<? extends Vector4fc> vertices = polygon.getVertices();
+            int poleVertex = -1;
+            double maxX = -1;
+            double minX = -1;
+            boolean hasMaxMin = false;
+
+            for (int i = 0; i < vertices.size(); i++) {
+                Vector4fc vertex = vertices.get(i);
+                float x = vertex.x();
+                float y = vertex.y();
+                float z = vertex.z();
+
+                double cx;
+                double cy;
+
+                if (x == 0f && y == 0f) {
+                    poleVertex = i;
+                    cx = 0;
+                    if (z > 0) {
+                        cy = 0;
+                    } else {
+                        cy = 1;
+                    }
+                } else {
+                    // Convert to spherical coords
+                    double rho = Math.sqrt(x * x + y * y + z * z);
+                    double theta = Math.atan(y / x);
+
+                    if (x == 0) {
+                        if (y > 0) {
+                            theta = Math.PI / 2;
+                        } else if (y < 0) {
+                            theta = 3 * Math.PI / 2;
+                        } else {
+                            theta = 0;
+                        }
+                    } else if (x < 0) {
+                        theta += Math.PI;
+                    } else if (y < 0) {
+                        theta += 2 * Math.PI;
+                    }
+
+                    double phi = Math.acos(z / (rho));
+
+                    // Now, from spherical to texture
+                    cx = theta / (2 * Math.PI);
+                    cy = phi / Math.PI;
+
+                    if (!hasMaxMin) {
+                        minX = maxX = cx;
+                        hasMaxMin = true;
+                    } else {
+                        if (maxX < cx) {
+                            maxX = cx;
+                        }
+                        if (minX > cx) {
+                            minX = cx;
+                        }
+                    }
+                }
+
+                textCoords.add(new Vector2f((float) cx, (float) cy));
+            }
+
+
+            // handle wrap-arounds
+            if (maxX - minX > 0.5f) {
+                for (Vector2f t : textCoords) {
+                    if (t.x < maxX) {
+                        if (maxX - t.x > 0.5f) {
+                            t.x += 1;
+                        }
+                    }
+                }
+            }
+
+
+            // Special handling for poles
+            if (poleVertex != -1) {
+                Vector2f pole = textCoords.get(poleVertex);
+                double xSum = textCoords.stream().mapToDouble(t -> t.x).sum();
+                xSum -= textCoords.get(poleVertex).x;
+                double xAvg = xSum / (textCoords.size() - 1);
+                pole.x = (float)xAvg;
+            }
+
+            polygon.setTexCoords(textCoords);
+        }
     }
 
     private static void splitGeodesicFace(Polygon triangle, PolygonMesh mesh, int levels) {
@@ -48,7 +144,8 @@ public class Geodesic extends BaseModel {
         splitGeodesicFace(p1, p2, p3, mesh, levels);
     }
 
-    private static void splitGeodesicFace(Vector4fc p1, Vector4fc p2, Vector4fc p3, PolygonMesh mesh, int levels) {
+    private static void splitGeodesicFace(Vector4fc p1, Vector4fc p2, Vector4fc p3,
+                                          PolygonMesh mesh, int levels) {
 
         if (levels == 0) {
             Vector4f n1 = new Vector4f(p1);
@@ -82,6 +179,8 @@ public class Geodesic extends BaseModel {
             Vector4f m1 = new Vector4f(m13f, 1f);
             Vector4f m2 = new Vector4f(m23f, 1f);
             Vector4f m3 = new Vector4f(m33f, 1f);
+
+
             splitGeodesicFace(p1, m1, m3, mesh, levels - 1);
             splitGeodesicFace(m1, p2, m2, mesh, levels - 1);
             splitGeodesicFace(m3, m2, p3, mesh, levels - 1);

@@ -11,8 +11,6 @@ import org.lwjgl.opengl.GL;
 import java.util.List;
 
 import static org.lwjgl.opengl.GL11C.*;
-import static org.lwjgl.opengl.GL13C.GL_TEXTURE0;
-import static org.lwjgl.opengl.GL13C.GL_TEXTURE1;
 import static org.lwjgl.opengl.GL30.GL_FRAMEBUFFER_SRGB;
 
 public class Renderer {
@@ -20,15 +18,15 @@ public class Renderer {
 
     private int height;
 
-    private Texture texture1;
-
-    private Texture texture2;
-
     private ShaderProgram program;
 
     private ShaderProgram textureProgram;
 
+    private ShaderProgram textureNormalProgram;
+
     private ShaderProgram lightSourceProgram;
+
+    private TextureCatalog textureCatalog = new TextureCatalog();
 
     public Renderer(int width, int height) {
         this.width = width;
@@ -37,17 +35,6 @@ public class Renderer {
 
     public void init() throws Exception {
         GL.createCapabilities();
-
-        texture1 = new Texture();
-        texture1.loadTexture("fabrics_0075_color_2k.jpg", GL_RGB);
-
-
-        texture2 = new Texture();
-        texture2.loadTexture("fabrics_0075_normal_opengl_2k.png", GL_RGBA);
-
-
-        texture1.bindToUnit(GL_TEXTURE0);
-        texture2.bindToUnit(GL_TEXTURE1);
 
         program = new ShaderProgram();
         program.loadFromResources("shader/lightingp.vs", "shader/lightingp.fs");
@@ -60,8 +47,18 @@ public class Renderer {
         textureProgram.setInt("texture1", 0);
         textureProgram.setInt("texture2", 1);
 
+
+        textureNormalProgram = new ShaderProgram();
+        textureNormalProgram.loadFromResources("shader/lighting-texture-normal.vs", "shader/lighting-texture-normal.fs");
+        textureNormalProgram.useProgram();
+
+        textureNormalProgram.setInt("texture1", 0);
+        textureNormalProgram.setInt("texture2", 1);
+
         lightSourceProgram = new ShaderProgram();
         lightSourceProgram.loadFromResources("shader/lightSource.vs", "shader/lightSource.fs");
+
+        textureCatalog.loadTextures();
 
 
         // set global GL state
@@ -79,10 +76,11 @@ public class Renderer {
         Matrix4f view = scene.getCamera().view();
 
         Matrix4f projection = new Matrix4f();
-        projection.perspective(scene.getCamera().getFov(), (float)width/(float)height, 0.1f, 100f);
+        projection.perspective(scene.getCamera().getFov(), (float)width/(float)height, 0.01f, 100f);
 
         setUniforms(program, scene, projection, view);
         setUniforms(textureProgram, scene, projection, view);
+        setUniforms(textureNormalProgram, scene, projection, view);
         setUniforms(lightSourceProgram, scene, projection, view);
 
         for (int i = 0; i < scene.getObjects().size(); i++) {
@@ -154,15 +152,22 @@ public class Renderer {
         Matrix4f modelTransform = gameObject.getTransform();
 
         ShaderProgram program;
-        Mesh mesh = gameObject.mesh();
-        if (mesh.getTexCoordSize() > 0) {
-            program = this.textureProgram;
+        String textureName = gameObject.getTexture();
+        if (textureName != null) {
+            TextureSet textureSet = textureCatalog.getTexture(textureName);
+            if (textureSet.getNormal() == null) {
+                program = textureProgram;
+            } else {
+                program = textureNormalProgram;
+            }
+            textureSet.bind();
         } else {
             program = this.program;
         }
 
         program.useProgram();
 
+        Mesh mesh = gameObject.mesh();
 
 
         program.setMatrix("model", modelTransform);
@@ -186,20 +191,6 @@ public class Renderer {
         }
     }
 
-    private void debugTBN(Mesh mesh, Matrix4f modelTransform) {
-
-        Vector3f normal = mesh.getNormal(0);
-        Vector3f tangent = mesh.getTangent(0);
-        Vector3f bitangent = mesh.getBitangent(0);
-
-        Vector3f T = new Vector4f(tangent, 0).mul(modelTransform).normalize().xyz(new Vector3f());
-        Vector3f B = new Vector4f(bitangent, 0).mul(modelTransform).normalize().xyz(new Vector3f());
-        Vector3f N = new Vector4f(normal, 0).mul(modelTransform).normalize().xyz(new Vector3f());
-
-        Matrix3f TBN  = new Matrix3f(T, B, N);
-        Vector3f newNormal = new Vector3f(normal).mul(TBN);
-        System.out.println(normal + " " + newNormal);
-    }
 
     public void clear() {
         program.deleteProgram();

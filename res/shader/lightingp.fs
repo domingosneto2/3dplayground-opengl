@@ -51,7 +51,7 @@ vec4 CalcPointLight(PointLight light, vec3 normal, vec3 FragPos, vec3 viewDir)
 
     float attenuation = 1.0 / (light.constant + light.linear * lightDist + light.quadratic * lightDist * lightDist);
 
-    vec4 result = (ambient + diffuse * attenuation) * color + specular * attenuation;
+    vec4 result = ((ambient + diffuse) * color + specular) * attenuation;
     return result;
 }
 

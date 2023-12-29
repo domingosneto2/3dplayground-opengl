@@ -4,7 +4,7 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 public class Camera {
-    Vector3f pos = new Vector3f(0f, 0f, 3f);
+    Vector3f pos = new Vector3f(0f, 0f, 0f);
     Vector3f front = new Vector3f(0f, 0f, -1);
     Vector3f up = new Vector3f(0f, 1f, 0f);
 

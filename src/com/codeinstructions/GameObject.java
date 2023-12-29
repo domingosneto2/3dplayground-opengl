@@ -4,8 +4,6 @@ import com.codeinstructions.models.Mesh;
 import com.codeinstructions.models.Model;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-import org.joml.Vector4f;
-import org.joml.Vector4fc;
 
 public class GameObject {
     private Matrix4f transform;
@@ -15,6 +13,8 @@ public class GameObject {
     private Model model;
 
     private Mesh mesh;
+
+    private String texture;
 
     public GameObject(Vector3f pos, Material material, Model model) {
         this.transform = new Matrix4f().identity().translate(pos);
@@ -26,6 +26,14 @@ public class GameObject {
         this.transform = transform;
         this.material = material;
         this.model = model;
+    }
+
+    public String getTexture() {
+        return texture;
+    }
+
+    public void setTexture(String texture) {
+        this.texture = texture;
     }
 
     public Matrix4f getTransform() {

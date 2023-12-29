@@ -175,6 +175,17 @@ public class Polygon {
         return center;
     }
 
+    public final Vector2f centerTexCoord() {
+        float x = 0, y = 0;
+        for (int i = 0; i < texCoords.size(); i++) {
+            Vector2fc v = texCoords.get(i);
+            x += v.x();
+            y += v.y();
+        }
+        Vector2f centerTexCoord = new Vector2f(x/texCoords.size(), y/texCoords.size());
+        return centerTexCoord;
+    }
+
     public final void setColor(float color) {
         this.color = color;
     }
@@ -317,6 +328,11 @@ public class Polygon {
     public void setTexCoords(List<? extends Vector2fc> list) {
         texCoords.clear();
         texCoords.addAll(list);
+    }
+
+    public void setTexCoords(Vector2fc ... vectors) {
+        texCoords.clear();
+        texCoords.addAll(Arrays.asList(vectors));
     }
 
     public List<Vector2fc> getTexCoords() {

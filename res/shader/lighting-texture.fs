@@ -1,14 +1,12 @@
 #version 330 core
 
-// Fragment shader with Texture and Normal Map support.
+// Fragment shader with basic Texture support.
 
 in vec3 FragPos;
 in vec3 MyNormal;
 in vec2 TexCoord;
-in mat3 TBN;
 
 uniform sampler2D texture1;
-uniform sampler2D texture2;
 
 uniform vec4 color;
 uniform vec3 lightPos;
@@ -43,11 +41,6 @@ out vec4 FragColor;
 vec4 CalcPointLight(PointLight light, vec3 normal, vec3 FragPos, vec3 viewDir)
 {
     vec4 texColor = texture(texture1, TexCoord);
-    vec3 texNormal = texture(texture2, TexCoord).rgb;
-    texNormal = texNormal * 2.0 - 1.0;
-    texNormal = normalize(TBN * texNormal);
-
-    normal = texNormal;
 
     vec3 lightDir = normalize(light.position - FragPos);
     float lightDist = length(light.position - FragPos);
@@ -63,7 +56,7 @@ vec4 CalcPointLight(PointLight light, vec3 normal, vec3 FragPos, vec3 viewDir)
 
     float attenuation = 1.0 / (light.constant + light.linear * lightDist + light.quadratic * lightDist * lightDist);
 
-    vec4 result = (ambient + diffuse * attenuation) * color * texColor + specular * attenuation;
+    vec4 result = ((ambient + diffuse) * color * texColor + specular) * attenuation;
     return result;
 }
 
