@@ -5,8 +5,8 @@ public class ModelCatalog {
         return new Geodesic(4);
     }
 
-    public Rectangle rectangle() {
-        return new Rectangle();
+    public Rectangle rectangle(int xRepeats, int yRepeats) {
+        return new Rectangle(xRepeats, yRepeats);
     }
 
     public Cube cube() {

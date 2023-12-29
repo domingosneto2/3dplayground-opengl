@@ -3,8 +3,6 @@ package com.codeinstructions;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
-import java.io.IOException;
-
 import com.codeinstructions.models.ModelCatalog;
 import org.lwjgl.glfw.GLFWFramebufferSizeCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
@@ -101,6 +99,7 @@ public class Main {
 
             renderer.render(scene);
 
+            //glfwSwapInterval(1);
             glfwSwapBuffers(window);
         }
 

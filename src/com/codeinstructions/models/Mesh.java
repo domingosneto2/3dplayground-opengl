@@ -16,9 +16,23 @@ public class Mesh {
 
     int normalSize;
 
+    int normalOffset;
+
     int colorSize;
 
+    int colorOffset;
+
     int texCoordSize;
+
+    int texCoordOffset;
+
+    int tangentSize;
+
+    int tangentOffset;
+
+    int bitangentSize;
+
+    int bitangentOffset;
 
     int vao;
     int vbo;
@@ -30,26 +44,21 @@ public class Mesh {
 
     int texCoordIndex = -1;
 
+    int tangentIndex = -1;
+
+    int bitangentIndex = -1;
+
     boolean concave;
 
     boolean initialized;
 
 
-
-    public Mesh(float[] vertices, int[] indices, int vertexSize, int normalSize, int colorSize, int texCoordSize, boolean concave) {
-        this.vertices = vertices;
-        this.indices = indices;
-        this.vertexSize = vertexSize;
-        this.normalSize = normalSize;
-        this.colorSize = colorSize;
-        this.texCoordSize = texCoordSize;
-        this.concave = concave;
-    }
-
-    public Mesh(float[] vertices, int vertexSize, int normalSize, int colorSize, int texCoordSize, boolean concave) {
+    public Mesh(float[] vertices, int vertexSize, int normalSize, int tangentSize, int bitangentSize, int colorSize, int texCoordSize, boolean concave) {
         this.vertices = vertices;
         this.vertexSize = vertexSize;
         this.normalSize = normalSize;
+        this.tangentSize = tangentSize;
+        this.bitangentSize = bitangentSize;
         this.colorSize = colorSize;
         this.texCoordSize = texCoordSize;
         this.concave = concave;
@@ -77,6 +86,7 @@ public class Mesh {
         if (normalSize != 0) {
             glVertexAttribPointer(nextIndex, normalSize, GL_FLOAT, false, stride * 4, runningSize * 4L);
             glEnableVertexAttribArray(nextIndex);
+            normalOffset = runningSize;
             normalIndex = nextIndex;
             runningSize += normalSize;
             nextIndex++;
@@ -85,6 +95,7 @@ public class Mesh {
         if (colorSize != 0) {
             glVertexAttribPointer(nextIndex, colorSize, GL_FLOAT, false, stride * 4, runningSize  * 4L);
             glEnableVertexAttribArray(nextIndex);
+            colorOffset = runningSize;
             colorIndex = nextIndex;
             runningSize += colorSize;
             nextIndex++;
@@ -92,7 +103,26 @@ public class Mesh {
         if (texCoordSize != 0) {
             glVertexAttribPointer(nextIndex, texCoordSize, GL_FLOAT, false, stride * 4, runningSize * 4L);
             glEnableVertexAttribArray(nextIndex);
+            texCoordOffset = runningSize;
             texCoordIndex = nextIndex;
+            runningSize += texCoordIndex;
+            nextIndex++;
+        }
+
+        if (tangentSize != 0) {
+            glVertexAttribPointer(nextIndex, tangentSize, GL_FLOAT, false, stride * 4, runningSize * 4L);
+            glEnableVertexAttribArray(nextIndex);
+            tangentOffset = runningSize;
+            tangentIndex = nextIndex;
+            runningSize += tangentSize;
+            nextIndex++;
+        }
+
+        if (bitangentSize != 0) {
+            glVertexAttribPointer(nextIndex, bitangentSize, GL_FLOAT, false, stride * 4, runningSize * 4L);
+            glEnableVertexAttribArray(nextIndex);
+            bitangentOffset = runningSize;
+            bitangentIndex = nextIndex;
         }
 
         initialized = true;
@@ -123,7 +153,41 @@ public class Mesh {
     }
 
     public int getStride() {
-        return vertexSize + normalSize + colorSize + texCoordSize;
+        return vertexSize + normalSize + colorSize + texCoordSize + tangentSize + bitangentSize;
+    }
+
+    public int getNormalOffset() {
+        return normalOffset;
+    }
+
+    public int getColorOffset() {
+        return colorOffset;
+    }
+
+    public int getTexCoordOffset() {
+        return texCoordOffset;
+    }
+
+    public int getTangentOffset() {
+        return tangentOffset;
+    }
+
+    public int getBitangentOffset() {
+        return bitangentOffset;
+    }
+
+    public int getTexCoordSize() {
+        return texCoordSize;
+    }
+
+    public Vector3f getTangent(int index) {
+        int pos = getStride() * index + tangentOffset;
+        return new Vector3f(vertices[pos], vertices[pos + 1], vertices[pos + 2]);
+    }
+
+    public Vector3f getBitangent(int index) {
+        int pos = getStride() * index + bitangentOffset;
+        return new Vector3f(vertices[pos], vertices[pos + 1], vertices[pos + 2]);
     }
 
     public Vector3f getNormal(int index) {

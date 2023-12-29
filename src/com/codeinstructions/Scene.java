@@ -1,9 +1,6 @@
 package com.codeinstructions;
 
-import com.codeinstructions.models.Angle;
-import com.codeinstructions.models.Color;
-import com.codeinstructions.models.Model;
-import com.codeinstructions.models.ModelCatalog;
+import com.codeinstructions.models.*;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
@@ -29,6 +26,8 @@ public class Scene {
     private float spikeLength;
 
     private ModelCatalog modelCatalog;
+
+    Spiker<Geodesic> model;
 
 
     public Scene(ModelCatalog modelCatalog) {
@@ -57,16 +56,22 @@ public class Scene {
 
         Vector3f light1Pos = new Vector3f(10, 10, 10);
         Vector3f light2Pos = new Vector3f(-10, 5, -10);
-        Vector4f lightColor = new Vector4f(1, 1, 1, 1);
+
+//        Vector3f light1Pos = new Vector3f(10, 10, 2);
+//        Vector3f light2Pos = new Vector3f(-10, 5, 2);
+
+        Vector4fc lightColor = Color.WHITE;
+        Vector4fc lightColor2 = Color.YELLOW;
         Vector4f ambientColor = new Vector4f(lightColor).mul(0.1f);
+        Vector4f ambientColor2 = new Vector4f(lightColor2).mul(0.1f);
 
         camera = new Camera();
-        camera.moveUp(2);
+        camera.moveUp(10);
         camera.lookDown(Angle.toRadians(30));
-        camera.back(10);
+        camera.back(14);
 
         createLight(light1Pos, lightColor, ambientColor, lightColor,10f, 1f, 1f, 1f, 0.3f, 0.1f);
-        createLight(light2Pos, lightColor, Color.BLACK, lightColor,5f, 1f, 1f, 1f, 0.3f, 0.1f);
+        createLight(light2Pos, lightColor2, ambientColor2, lightColor,5f, 1f, 1f, 1f, 0.3f, 0.1f);
 
         float[] specularStrengths = {0.1f, 0.2f, 0.5f, 0.8f, 1f};
         float[] specularFactors = {2, 4, 8, 16, 32, 64, 128, 256};
@@ -74,6 +79,8 @@ public class Scene {
         float step = 1.5f;
 
         Vector4fc[] colors = {Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW, Color.CYAN, Color.MAGENTA, Color.WHITE, Color.BLACK};
+
+        model = new Spiker<>(new Geodesic(4), 0f);
 
         Random random = new Random();
         for (int i = 0; i < 12; i++) {
@@ -86,21 +93,21 @@ public class Scene {
 
                 Vector3f pos = new Vector3f(x, 0.5f, y);
                 Material material = new Material(colors[random.nextInt(colors.length)], specularStrengths[random.nextInt(specularStrengths.length)], specularFactors[random.nextInt(specularFactors.length)]);
-                addObject(pos, material, modelCatalog.geodesic());
+                addObject(pos, material, model);
             }
         }
 
 
-        Material floorMat = new Material(Color.GREEN.mul(0.5f, new Vector4f()), 0.5f, 32);
+        Material floorMat = new Material(Color.WHITE, 0, 32);
         Matrix4f floorTransform = new Matrix4f().identity()
                 .rotateX(Angle.toRadians(-90))
                 .scale(30, 30, 1);
 
-        addObject(floorTransform, floorMat, modelCatalog.rectangle());
+        addObject(floorTransform, floorMat, modelCatalog.rectangle(4, 4));
 
 
         for (Light light : lights) {
-            light.getPosition().x /= 3f;
+            light.getPosition().x /= 1.5f;
         }
     }
 
@@ -115,12 +122,13 @@ public class Scene {
 
     public void update() {
         for (Light light : lights) {
-            light.getPosition().x *= 3f;
+            light.getPosition().x *= 1.5f;
             light.getPosition().rotateY(0.5f * deltaTime);
-            light.getPosition().x /= 3f;
+            light.getPosition().x /= 1.5f;
+            //light.getPosition().rotateZ(0.5f * deltaTime);
         }
 
-
+        model.setSpikeDelta(spikeLength);
     }
 
     public void setTime(double time) {
@@ -228,14 +236,10 @@ public class Scene {
     }
 
     public void decreaseDetail() {
-        for (GameObject object : objects) {
-            object.getModel().decreaseDetail();
-        }
+        model.decreaseDetail();;
     }
 
     public void increaseDetail() {
-        for (GameObject object : objects) {
-            object.getModel().increaseDetail();
-        }
+        model.increaseDetail();;
     }
 }

@@ -1,7 +1,11 @@
 package com.codeinstructions;
 
 import com.codeinstructions.models.Mesh;
+import org.jetbrains.annotations.NotNull;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 import org.lwjgl.opengl.GL;
 
 import java.util.List;
@@ -22,6 +26,8 @@ public class Renderer {
 
     private ShaderProgram program;
 
+    private ShaderProgram textureProgram;
+
     private ShaderProgram lightSourceProgram;
 
     public Renderer(int width, int height) {
@@ -33,11 +39,12 @@ public class Renderer {
         GL.createCapabilities();
 
         texture1 = new Texture();
-        texture1.loadTexture("container.jpg", GL_RGB);
+        texture1.loadTexture("fabrics_0075_color_2k.jpg", GL_RGB);
 
 
         texture2 = new Texture();
-        texture2.loadTexture("awesomeface.png", GL_RGBA);
+        texture2.loadTexture("fabrics_0075_normal_opengl_2k.png", GL_RGBA);
+
 
         texture1.bindToUnit(GL_TEXTURE0);
         texture2.bindToUnit(GL_TEXTURE1);
@@ -46,12 +53,16 @@ public class Renderer {
         program.loadFromResources("shader/lightingp.vs", "shader/lightingp.fs");
         program.useProgram();
 
+        textureProgram = new ShaderProgram();
+        textureProgram.loadFromResources("shader/lighting-texture.vs", "shader/lighting-texture.fs");
+        textureProgram.useProgram();
+
+        textureProgram.setInt("texture1", 0);
+        textureProgram.setInt("texture2", 1);
+
         lightSourceProgram = new ShaderProgram();
         lightSourceProgram.loadFromResources("shader/lightSource.vs", "shader/lightSource.fs");
 
-
-        program.setInt("texture1", 0);
-        program.setInt("texture2", 1);
 
         // set global GL state
         glClearColor(0f, 0f, 0f, 1.0f);
@@ -70,6 +81,25 @@ public class Renderer {
         Matrix4f projection = new Matrix4f();
         projection.perspective(scene.getCamera().getFov(), (float)width/(float)height, 0.1f, 100f);
 
+        setUniforms(program, scene, projection, view);
+        setUniforms(textureProgram, scene, projection, view);
+        setUniforms(lightSourceProgram, scene, projection, view);
+
+        for (int i = 0; i < scene.getObjects().size(); i++) {
+            GameObject gameObject = scene.getObjects().get(i);
+            renderObject(gameObject);
+        }
+
+        lightSourceProgram.useProgram();
+        List<Light> lights = scene.getLights();
+        for (int i = 0; i < lights.size(); i++) {
+            Light light = lights.get(i);
+            renderPointLight(light, projection, view);
+        }
+    }
+
+    @NotNull
+    private void setUniforms(ShaderProgram program, Scene scene, Matrix4f projection, Matrix4f view) {
         program.useProgram();
 
         program.setMatrix("projection", projection);
@@ -95,17 +125,6 @@ public class Renderer {
         program.setInt("numPointLights", lights.size());
 
         program.setVector3("cameraPos", scene.getCamera().pos);
-
-        for (int i = 0; i < scene.getObjects().size(); i++) {
-            GameObject gameObject = scene.getObjects().get(i);
-            renderObject(gameObject);
-        }
-
-        lightSourceProgram.useProgram();
-        for (int i = 0; i < lights.size(); i++) {
-            Light light = lights.get(i);
-            renderPointLight(light, projection, view);
-        }
     }
 
     private void renderPointLight(Light light, Matrix4f projection, Matrix4f view) {
@@ -134,6 +153,18 @@ public class Renderer {
     private void renderObject(GameObject gameObject) {
         Matrix4f modelTransform = gameObject.getTransform();
 
+        ShaderProgram program;
+        Mesh mesh = gameObject.mesh();
+        if (mesh.getTexCoordSize() > 0) {
+            program = this.textureProgram;
+        } else {
+            program = this.program;
+        }
+
+        program.useProgram();
+
+
+
         program.setMatrix("model", modelTransform);
         Matrix4f normal = new Matrix4f(modelTransform).normal();
         program.setMatrix("normal", normal);
@@ -144,7 +175,7 @@ public class Renderer {
         program.setFloat("specularStrength", material.getSpecularStrength());
         program.setFloat("specularFactor", material.getSpecularFactor());
 
-        Mesh mesh = gameObject.mesh();
+        // debugTBN(mesh, modelTransform);
 
         mesh.bind();
 
@@ -153,6 +184,21 @@ public class Renderer {
         } else {
             glDrawArrays(GL_TRIANGLES, 0, mesh.getNumVertices());
         }
+    }
+
+    private void debugTBN(Mesh mesh, Matrix4f modelTransform) {
+
+        Vector3f normal = mesh.getNormal(0);
+        Vector3f tangent = mesh.getTangent(0);
+        Vector3f bitangent = mesh.getBitangent(0);
+
+        Vector3f T = new Vector4f(tangent, 0).mul(modelTransform).normalize().xyz(new Vector3f());
+        Vector3f B = new Vector4f(bitangent, 0).mul(modelTransform).normalize().xyz(new Vector3f());
+        Vector3f N = new Vector4f(normal, 0).mul(modelTransform).normalize().xyz(new Vector3f());
+
+        Matrix3f TBN  = new Matrix3f(T, B, N);
+        Vector3f newNormal = new Vector3f(normal).mul(TBN);
+        System.out.println(normal + " " + newNormal);
     }
 
     public void clear() {

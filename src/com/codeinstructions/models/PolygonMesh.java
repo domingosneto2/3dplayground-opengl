@@ -1,9 +1,6 @@
 package com.codeinstructions.models;
 
-import org.joml.Matrix4f;
-import org.joml.Vector3f;
-import org.joml.Vector4f;
-import org.joml.Vector4fc;
+import org.joml.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -95,11 +92,18 @@ public class PolygonMesh {
         List<Polygon> triangles = tesselate();
         int numVertices = triangles.stream().mapToInt(Polygon::getNumVertices).sum();
 
-        float[] vertices = new float[numVertices * 6];
+        int stride = 6;
+        if (!triangles.get(0).getTexCoords().isEmpty()) {
+            // Texture coords, tangent, bitangent
+            stride += 8;
+        }
+
+        float[] vertices = new float[numVertices * stride];
         int count = 0;
         for (Polygon polygon : triangles) {
             List<? extends Vector4fc> polygonVertices = polygon.getVertices();
             List<? extends Vector4fc> vertexNormals = polygon.getVertexNormals();
+            List<Vector2fc> texCoords = polygon.getTexCoords();
             Vector4fc normal = null;
             if (vertexNormals == null || vertexNormals.isEmpty()) {
                 normal = polygon.normal();
@@ -117,6 +121,26 @@ public class PolygonMesh {
                 vertices[count + 4] = vertexNormal.y();
                 vertices[count + 5] = vertexNormal.z();
                 count += 6;
+
+                if (!texCoords.isEmpty()) {
+                    Vector2fc texCoord = texCoords.get(i);
+                    vertices[count] = texCoord.x();
+                    vertices[count + 1] = texCoord.y();
+
+
+                    Vector3fc tangent = polygon.getTangent();
+                    Vector3fc bitangent = polygon.getBitangent();
+
+                    vertices[count + 2] = tangent.x();
+                    vertices[count + 3] = tangent.y();
+                    vertices[count + 4] = tangent.z();
+
+                    vertices[count + 5] = bitangent.x();
+                    vertices[count + 6] = bitangent.y();
+                    vertices[count + 7] = bitangent.z();
+
+                    count += 8;
+                }
             }
 
         }
@@ -127,12 +151,12 @@ public class PolygonMesh {
         List<Polygon> result = new ArrayList<>();
 
         for (Polygon polygon : polygons) {
-            if (polygon.getNumVertices() == 3) {
-                result.add(polygon);
-            } else {
-                polygon.tesselate(result);
-            }
+            polygon.tesselate(result);
         }
         return result;
+    }
+
+    public boolean hasTexCoords() {
+        return !polygons.get(0).getTexCoords().isEmpty();
     }
 }

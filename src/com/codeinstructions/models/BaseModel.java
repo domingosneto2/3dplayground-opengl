@@ -42,7 +42,17 @@ public abstract class BaseModel implements Model {
         if (modified) {
             polygonMesh = computeMesh();
             float[] vertices = polygonMesh.getVerticesArray();
-            mesh = new Mesh(vertices, 3, 3, 0, 0, polygonMesh.concave);
+            boolean hasTexCoord = polygonMesh.hasTexCoords();
+            int texCoordSize = 0;
+            int tangentSize = 0;
+            int bitangentSize = 0;
+
+            if (hasTexCoord) {
+                texCoordSize = 2;
+                tangentSize = 3;
+                bitangentSize = 3;
+            }
+            mesh = new Mesh(vertices, 3, 3, tangentSize, bitangentSize, 0, texCoordSize, polygonMesh.concave);
         }
 
         modified = false;

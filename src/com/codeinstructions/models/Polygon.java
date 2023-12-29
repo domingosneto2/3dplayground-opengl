@@ -1,9 +1,7 @@
 package com.codeinstructions.models;
 
-import org.joml.Matrix4f;
+import org.joml.*;
 import org.joml.Vector4f;
-import org.joml.Vector4f;
-import org.joml.Vector4fc;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,34 +12,64 @@ public class Polygon {
 
     private final List<Vector4fc> vertexNormals;
 
+    private final List<Vector2fc> texCoords;
+
     private Vector4fc normal;
     private Vector4fc center;
     private float color;
     private List<Float> colors;
 
+    private Vector3f tangent;
+    private Vector3f bitangent;
+
     public Polygon(Vector4fc... vertices) {
         this.vertices = new ArrayList<>(Arrays.asList(vertices));
         vertexNormals = new ArrayList<>();
+        texCoords = new ArrayList<>();
     }
 
     public Polygon(List<? extends Vector4fc> vertices) {
         this.vertices = new ArrayList<>(vertices);
         vertexNormals = new ArrayList<>();
+        texCoords = new ArrayList<>();
     }
 
     public Polygon(List<? extends Vector4fc> vertices, List<? extends Vector4fc> normals) {
         this.vertices = new ArrayList<>(vertices);
         this.vertexNormals = new ArrayList<>(normals);
+        texCoords = new ArrayList<>();
     }
 
-    public Polygon(ArrayList<? extends Vector4fc> vertices, ArrayList<? extends Vector4fc> normals) {
-        this.vertices = new ArrayList<>(vertices);
-        this.vertexNormals = new ArrayList<>(normals);
-    }
+    public void calculateTangentBitangent() {
+        Vector4fc p1 = vertices.get(0);
+        Vector4fc p2 = vertices.get(1);
+        Vector4fc p3 = vertices.get(2);
 
-    public Polygon(Mesh mesh, int[] vertexIds, int[] normalIds) {
-        this.vertices = null;
-        this.vertexNormals = null;
+        Vector3f edge1 = new Vector4f(p2).sub(p1).xyz(new Vector3f());
+        Vector3f edge2 = new Vector4f(p3).sub(p1).xyz(new Vector3f());
+
+        Vector2fc t1 = texCoords.get(0);
+        Vector2fc t2 = texCoords.get(1);
+        Vector2fc t3 = texCoords.get(2);
+
+        Vector2f deltaUV1 = new Vector2f(t2).sub(t1);
+        Vector2f deltaUV2 = new Vector2f(t3).sub(t1);
+
+        float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+        tangent = new Vector3f();
+        bitangent = new Vector3f();
+
+        tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+        tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+        tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+
+        bitangent.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+        bitangent.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+        bitangent.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+
+        tangent.normalize();
+        bitangent.normalize();
     }
 
     public List<? extends Vector4fc> getVertices() {
@@ -108,6 +136,7 @@ public class Polygon {
         if (colors != null) {
             polygon.setColors(colors);
         }
+        polygon.setTexCoords(texCoords);
         return polygon;
     }
 
@@ -215,6 +244,9 @@ public class Polygon {
     public void tesselate(List<Polygon> dest) {
         if (vertices.size() == 3) {
             dest.add(this);
+            if (hasTexCoords()) {
+                calculateTangentBitangent();
+            }
             return;
         }
         if (vertices.size() > 4) {
@@ -225,31 +257,77 @@ public class Polygon {
         Vector4fc v2 = vertices.get(1);
         Vector4fc v3 = vertices.get(2);
 
+        Polygon polygon = new Polygon(Arrays.asList(v1, v2, v3));
+        dest.add(polygon);
+
         if (hasVertexNormals()) {
             Vector4fc n1 = vertexNormals.get(0);
             Vector4fc n2 = vertexNormals.get(1);
             Vector4fc n3 = vertexNormals.get(2);
 
-            dest.add(new Polygon(Arrays.asList(v1, v2, v3), Arrays.asList(n1, n2, n3)));
-        } else {
-            dest.add(new Polygon(Arrays.asList(v1, v2, v3)));
+            polygon.setVertexNormals(Arrays.asList(n1, n2, n3));
+        }
+
+        if (hasTexCoords()) {
+            Vector2fc c1 = texCoords.get(0);
+            Vector2fc c2 = texCoords.get(1);
+            Vector2fc c3 = texCoords.get(2);
+
+            polygon.setTexCoords(Arrays.asList(c1, c2, c3));
+            polygon.calculateTangentBitangent();
         }
 
         v1 = vertices.get(2);
         v2 = vertices.get(3);
         v3 = vertices.get(0);
 
+        polygon = new Polygon(Arrays.asList(v1, v2, v3));
+        dest.add(polygon);
+
         if (hasVertexNormals()) {
             Vector4fc n1 = vertexNormals.get(2);
             Vector4fc n2 = vertexNormals.get(3);
             Vector4fc n3 = vertexNormals.get(0);
-            dest.add(new Polygon(Arrays.asList(v1, v2, v3), Arrays.asList(n1, n2, n3)));
-        } else {
-            dest.add(new Polygon(Arrays.asList(v1, v2, v3)));
+            polygon.setVertexNormals(Arrays.asList(n1, n2, n3));
         }
+
+        if (hasTexCoords()) {
+            Vector2fc c1 = texCoords.get(0);
+            Vector2fc c2 = texCoords.get(1);
+            Vector2fc c3 = texCoords.get(2);
+
+            polygon.setTexCoords(Arrays.asList(c1, c2, c3));
+            polygon.calculateTangentBitangent();
+        }
+    }
+
+    private void setVertexNormals(List<? extends Vector4fc> list) {
+        vertexNormals.clear();
+        vertexNormals.addAll(list);
+    }
+
+    private boolean hasTexCoords() {
+        return !texCoords.isEmpty();
     }
 
     private boolean hasVertexNormals() {
         return vertexNormals != null && !vertexNormals.isEmpty();
+    }
+
+    public void setTexCoords(List<? extends Vector2fc> list) {
+        texCoords.clear();
+        texCoords.addAll(list);
+    }
+
+    public List<Vector2fc> getTexCoords() {
+        return texCoords;
+    }
+
+    public Vector3fc getTangent() {
+        return tangent;
+    }
+
+    public Vector3fc getBitangent() {
+        return bitangent;
     }
 }

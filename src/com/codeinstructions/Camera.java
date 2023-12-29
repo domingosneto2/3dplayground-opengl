@@ -11,7 +11,8 @@ public class Camera {
     private float fov = (float) Math.toRadians(45);
 
     void forward(float delta) {
-        pos.add(new Vector3f(front).mul(delta));
+        Vector3f frontxz = new Vector3f(front.x, 0, front.z).normalize();
+        pos.add(frontxz.mul(delta));
     }
 
     Matrix4f view() {
@@ -33,20 +34,22 @@ public class Camera {
     }
 
     public void turnLeft(float radians) {
-        front.rotateAxis(radians, up.x, up.y, up.z).normalize();
+        front.rotateY(radians).normalize();
+        up.rotateY(radians).normalize();
     }
 
     public void turnRight(float radians) {
-        front.rotateAxis(-radians, up.x, up.y, up.z).normalize();
+        front.rotateY(-radians).normalize();
+        up.rotateY(-radians).normalize();
     }
 
     public void moveUp(float delta) {
-        Vector3f direction = new Vector3f(up).mul(delta);
+        Vector3f direction = new Vector3f(0, 1, 0).mul(delta);
         pos.add(direction);
     }
 
     public void moveDown(float delta) {
-        Vector3f direction = new Vector3f(up).mul(-delta);
+        Vector3f direction = new Vector3f(0, 1, 0).mul(-delta);
         pos.add(direction);
     }
 

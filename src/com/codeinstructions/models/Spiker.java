@@ -28,9 +28,12 @@ public class Spiker<T extends Model> extends BaseModel {
     @Override
     protected PolygonMesh computeMesh() {
 
+        System.out.println("Spiker computing....");
         if (myMesh == null || isModified() || delegate.isModified()) {
+            clearModified();
             PolygonMesh sourceMesh = delegate.polygonMesh();
             myMesh = applySpikes(sourceMesh);
+            System.out.println("Spiker computed.");
         }
         return myMesh;
     }

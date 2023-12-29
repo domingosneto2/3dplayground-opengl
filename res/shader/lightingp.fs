@@ -1,5 +1,7 @@
 #version 330 core
 
+// Fragment Shader for Phong lighting model - No texture support.
+
 in vec3 FragPos;
 in vec3 MyNormal;
 
@@ -55,12 +57,6 @@ vec4 CalcPointLight(PointLight light, vec3 normal, vec3 FragPos, vec3 viewDir)
 
 void main()
 {
-    //float eyeDiffusion = max(dot(MyNormal, eyeDir), 0.0);
-    //eyeDiffusion = pow(eyeDiffusion, 0.5) * 0.4;
-    //eyeDiffusion = clamp(0.8 + eyeDiffusion, 0.0, 1.0);
-    //vec4 diffuse = diff * lightColor * 1 / (lightDist * lightDist);
-    //vec4 diffuse = diff * lightColor;
-
     vec3 normal = normalize(MyNormal);;
 
     vec4 result = vec4(0, 0, 0, 0);
