@@ -57,6 +57,8 @@ public class Icosahedron extends BaseModel {
             mesh.add(new Polygon(south, layer2.get(i + 1), layer2.get(i)));
         }
 
+        Geodesic.computeTextureCoords(mesh);
+
 
         return mesh;
 

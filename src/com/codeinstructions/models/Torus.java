@@ -1,6 +1,7 @@
 package com.codeinstructions.models;
 
 import org.joml.Matrix4f;
+import org.joml.Vector2f;
 import org.joml.Vector4f;
 
 import java.util.ArrayList;
@@ -81,13 +82,18 @@ public class Torus extends BaseModel{
                 Vector4f nc2 = new Vector4f(c2).sub(currentCenter).normalize();
                 Vector4f nc1 = new Vector4f(c1).sub(currentCenter).normalize();
 
-                //polygon(mesh, p1, p2, c2, c1);
                 List<Vector4f> vertices = Arrays.asList(p1, p2, c2, c1);
                 List<Vector4f> normals = Arrays.asList(np1, np2, nc2, nc1);
 
-//                mesh.add(new Polygon(Arrays.asList(p1, p2, c2), Arrays.asList(np1, np2, nc2)));
-//                mesh.add(new Polygon(Arrays.asList(c2, c1, p1), Arrays.asList(nc2, nc1, np1)));
-                mesh.add(new Polygon(vertices, normals));
+                Polygon polygon = new Polygon(vertices, normals);
+                Vector2f tp1 = new Vector2f((float)i / outerSteps, (float)j / innerSteps);
+                Vector2f tp2 = new Vector2f((float)i / outerSteps, (float)(j + 1) / innerSteps);
+                Vector2f tc1 = new Vector2f((float)(i + 1) / outerSteps, (float)j / innerSteps);
+                Vector2f tc2 = new Vector2f((float)(i + 1) / outerSteps, (float)(j + 1) / innerSteps);
+
+                polygon.setTexCoords(Arrays.asList(tp1, tp2, tc2, tc1));
+
+                mesh.add(polygon);
 
             }
             previousRing = currentRing;

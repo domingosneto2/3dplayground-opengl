@@ -2,7 +2,7 @@ package com.codeinstructions.models;
 
 public class ModelCatalog {
     public Geodesic geodesic() {
-        return new Geodesic(4);
+        return new Geodesic(4, false);
     }
 
     public Rectangle rectangle(int xRepeats, int yRepeats) {

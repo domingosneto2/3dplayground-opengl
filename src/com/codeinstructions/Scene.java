@@ -61,11 +61,13 @@ public class Scene {
         camera.moveUp(2);
         camera.back(3);
 
-        createLight(light1Pos, lightColor, ambientColor, lightColor,10f, 10f, 1f, 1f, 0.3f, 0.1f);
+        createLight(light1Pos, lightColor, ambientColor, lightColor,10f, 10f, 0f, 1f, 0.3f, 0.1f);
         //createLight(light2Pos, lightColor2, ambientColor2, lightColor,5f, 5f, 1f, 1f, 0.3f, 0.1f);
 
-        //model = new Spiker<>(new Geodesic(4), 0f);
-        model = new Spiker<>(new Geodesic(4), 0f);
+        model = new Spiker<>(new Geodesic(4, false), 0f);
+        //model = new Spiker<>(new Torus(50, 50, 0.3f), 0f);
+        //model = new Spiker<>(new Sphere(20, 40), 0f);
+        //model = new Spiker<>(new Icosahedron(), 0f);
 
 
         Matrix4f objectTransform = new Matrix4f().identity()
@@ -73,7 +75,7 @@ public class Scene {
                 .rotateY((float)Math.toRadians(90))
                 .rotateX(-(float)Math.toRadians(90 - 23));
 
-        Material material = new Material(Color.WHITE, 1, 32);
+        Material material = new Material(Color.WHITE, 1, 128);
         addObject(objectTransform, material, model, "earth");
 
         Material floorMaterial = new Material(Color.WHITE, 0, 32);
@@ -94,9 +96,9 @@ public class Scene {
     }
 
     public void update() {
-        for (Light light : lights) {
-            light.getPosition().rotateY(0.5f * deltaTime);
-        }
+//        for (Light light : lights) {
+//            light.getPosition().rotateY(0.5f * deltaTime);
+//        }
 
         // objects.get(0).getTransform().rotateZ((float)Math.toRadians(deltaTime * 10));
 

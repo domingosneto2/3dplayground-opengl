@@ -303,9 +303,9 @@ public class Polygon {
         }
 
         if (hasTexCoords()) {
-            Vector2fc c1 = texCoords.get(0);
-            Vector2fc c2 = texCoords.get(1);
-            Vector2fc c3 = texCoords.get(2);
+            Vector2fc c1 = texCoords.get(2);
+            Vector2fc c2 = texCoords.get(3);
+            Vector2fc c3 = texCoords.get(0);
 
             polygon.setTexCoords(Arrays.asList(c1, c2, c3));
             polygon.calculateTangentBitangent();

@@ -74,6 +74,8 @@ public class Sphere extends BaseModel {
             spherePolygon(mesh, previousVertices.get(i + 1), previousVertices.get(i), south);
         }
 
+        Geodesic.computeTextureCoords(mesh);
+
         return mesh;
     }
 

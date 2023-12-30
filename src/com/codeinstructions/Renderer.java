@@ -2,10 +2,7 @@ package com.codeinstructions;
 
 import com.codeinstructions.models.Mesh;
 import org.jetbrains.annotations.NotNull;
-import org.joml.Matrix3f;
 import org.joml.Matrix4f;
-import org.joml.Vector3f;
-import org.joml.Vector4f;
 import org.lwjgl.opengl.GL;
 
 import java.util.List;
@@ -23,6 +20,8 @@ public class Renderer {
     private ShaderProgram textureProgram;
 
     private ShaderProgram textureNormalProgram;
+
+    private ShaderProgram textureNormalSpecularProgram;
 
     private ShaderProgram lightSourceProgram;
 
@@ -55,6 +54,14 @@ public class Renderer {
         textureNormalProgram.setInt("texture1", 0);
         textureNormalProgram.setInt("texture2", 1);
 
+        textureNormalSpecularProgram = new ShaderProgram();
+        textureNormalSpecularProgram.loadFromResources("shader/lighting-texture-normal-specular.vs", "shader/lighting-texture-normal-specular.fs");
+        textureNormalSpecularProgram.useProgram();
+
+        textureNormalSpecularProgram.setInt("texture1", 0);
+        textureNormalSpecularProgram.setInt("texture2", 1);
+        textureNormalSpecularProgram.setInt("texture3", 2);
+
         lightSourceProgram = new ShaderProgram();
         lightSourceProgram.loadFromResources("shader/lightSource.vs", "shader/lightSource.fs");
 
@@ -81,6 +88,7 @@ public class Renderer {
         setUniforms(program, scene, projection, view);
         setUniforms(textureProgram, scene, projection, view);
         setUniforms(textureNormalProgram, scene, projection, view);
+        setUniforms(textureNormalSpecularProgram, scene, projection, view);
         setUniforms(lightSourceProgram, scene, projection, view);
 
         for (int i = 0; i < scene.getObjects().size(); i++) {
@@ -157,8 +165,10 @@ public class Renderer {
             TextureSet textureSet = textureCatalog.getTexture(textureName);
             if (textureSet.getNormal() == null) {
                 program = textureProgram;
-            } else {
+            } else if (textureSet.getSpecular() == null){
                 program = textureNormalProgram;
+            } else {
+                program = textureNormalSpecularProgram;
             }
             textureSet.bind();
         } else {

@@ -11,12 +11,15 @@ public class Geodesic extends BaseModel {
 
     private int level;
 
-    public static Geodesic model(int level) {
-        return new Geodesic(level);
+    private boolean flat;
+
+    public static Geodesic model(int level, boolean flat) {
+        return new Geodesic(level, flat);
     }
 
-    public Geodesic(int level) {
+    public Geodesic(int level, boolean flat) {
         this.level = level;
+        this.flat = flat;
     }
 
     public void setLevel(int level) {
@@ -31,7 +34,7 @@ public class Geodesic extends BaseModel {
         PolygonMesh geodesic = new PolygonMesh(true);
 
         for (Polygon polygon : icosahedron.getPolygons()) {
-            splitGeodesicFace(polygon, geodesic, level);
+            splitGeodesicFace(polygon, flat, geodesic, level);
         }
 
         computeTextureCoords(geodesic);
@@ -40,8 +43,8 @@ public class Geodesic extends BaseModel {
 
     }
 
-    private void computeTextureCoords(PolygonMesh geodesic) {
-        for (Polygon polygon : geodesic.getPolygons()) {
+    public static void computeTextureCoords(PolygonMesh sphericalMesh) {
+        for (Polygon polygon : sphericalMesh.getPolygons()) {
             List<Vector2f> textCoords = new ArrayList<>();
             List<? extends Vector4fc> vertices = polygon.getVertices();
             int poleVertex = -1;
@@ -107,7 +110,6 @@ public class Geodesic extends BaseModel {
                 textCoords.add(new Vector2f((float) cx, (float) cy));
             }
 
-
             // handle wrap-arounds
             if (maxX - minX > 0.5f) {
                 for (Vector2f t : textCoords) {
@@ -118,7 +120,6 @@ public class Geodesic extends BaseModel {
                     }
                 }
             }
-
 
             // Special handling for poles
             if (poleVertex != -1) {
@@ -133,7 +134,7 @@ public class Geodesic extends BaseModel {
         }
     }
 
-    private static void splitGeodesicFace(Polygon triangle, PolygonMesh mesh, int levels) {
+    private static void splitGeodesicFace(Polygon triangle, boolean flat, PolygonMesh mesh, int levels) {
         if (levels < 0) {
             throw new IllegalArgumentException();
         }
@@ -141,31 +142,36 @@ public class Geodesic extends BaseModel {
         Vector4fc p2 = triangle.getVertex(1);
         Vector4fc p3 = triangle.getVertex(2);
 
-        splitGeodesicFace(p1, p2, p3, mesh, levels);
+        splitGeodesicFace(p1, p2, p3, flat, mesh, levels);
     }
 
-    private static void splitGeodesicFace(Vector4fc p1, Vector4fc p2, Vector4fc p3,
+    private static void splitGeodesicFace(Vector4fc p1, Vector4fc p2, Vector4fc p3, boolean flat,
                                           PolygonMesh mesh, int levels) {
 
         if (levels == 0) {
-            Vector4f n1 = new Vector4f(p1);
-            Vector4f n2 = new Vector4f(p2);
-            Vector4f n3 = new Vector4f(p3);
+            if (flat) {
+                Polygon polygon = new Polygon(Arrays.asList(p1, p2, p3));
+                mesh.add(polygon);
+            } else {
+                Vector4f n1 = new Vector4f(p1);
+                Vector4f n2 = new Vector4f(p2);
+                Vector4f n3 = new Vector4f(p3);
 
-            n1.w = 0;
-            n2.w = 0;
-            n3.w = 0;
+                n1.w = 0;
+                n2.w = 0;
+                n3.w = 0;
 
-            n1.normalize();
-            n2.normalize();
-            n3.normalize();
+                n1.normalize();
+                n2.normalize();
+                n3.normalize();
 
-            n1.w = 1;
-            n2.w = 1;
-            n3.w = 1;
+                n1.w = 1;
+                n2.w = 1;
+                n3.w = 1;
 
-            Polygon polygon = new Polygon(Arrays.asList(p1, p2, p3), Arrays.asList(n1, n2, n3));
-            mesh.add(polygon);
+                Polygon polygon = new Polygon(Arrays.asList(p1, p2, p3), Arrays.asList(n1, n2, n3));
+                mesh.add(polygon);
+            }
         } else {
             Vector3f p13f = new Vector3f(p1.x(), p1.y(), p1.z());
             Vector3f p23f = new Vector3f(p2.x(), p2.y(), p2.z());
@@ -181,10 +187,10 @@ public class Geodesic extends BaseModel {
             Vector4f m3 = new Vector4f(m33f, 1f);
 
 
-            splitGeodesicFace(p1, m1, m3, mesh, levels - 1);
-            splitGeodesicFace(m1, p2, m2, mesh, levels - 1);
-            splitGeodesicFace(m3, m2, p3, mesh, levels - 1);
-            splitGeodesicFace(m3, m1, m2, mesh, levels - 1);
+            splitGeodesicFace(p1, m1, m3, flat, mesh, levels - 1);
+            splitGeodesicFace(m1, p2, m2, flat, mesh, levels - 1);
+            splitGeodesicFace(m3, m2, p3, flat, mesh, levels - 1);
+            splitGeodesicFace(m3, m1, m2, flat, mesh, levels - 1);
         }
     }
 
