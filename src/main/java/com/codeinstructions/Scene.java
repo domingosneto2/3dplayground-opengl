@@ -15,6 +15,7 @@ public class Scene {
     private Camera camera;
 
     private List<Light> lights = new ArrayList<>();
+    private List<DirectionalLight> directionalLights = new ArrayList<>();
     private List<GameObject> objects = new ArrayList<>();
 
     private Light playerLight;
@@ -37,7 +38,9 @@ public class Scene {
 
     public void addObject(Matrix4f transform, Material material, Model model, String texture) {
         GameObject gameObject = new GameObject(transform, material, model);
-        gameObject.setTexture(texture);
+        if (texture != null) {
+            gameObject.setTexture(texture);
+        }
         objects.add(gameObject);
     }
 
@@ -50,7 +53,7 @@ public class Scene {
     }
 
     public void init() {
-        Vector3f light1Pos = new Vector3f(10, 2, 10);
+        Vector3f light1Pos = new Vector3f(10, 3, 10);
         //Vector3f light1Pos = new Vector3f(0, 2, -10);
         Vector3f light2Pos = new Vector3f(-10, 5, -10);
 
@@ -65,6 +68,8 @@ public class Scene {
         camera.back(3);
 
         createLight(light1Pos, lightColor, ambientColor, lightColor,10f, 10f, 0f, 1f, 0.3f, 0.3f, 30f, 5);
+
+        //directionalLights.add(new DirectionalLight(light1Pos, lightColor, lightColor, lightColor, 1, 1, 0.001f, true));
 
         playerLight = new Light(camera.getPos(), Color.WHITE, Color.BLACK, Color.WHITE, 0.5f, 0.5f, 0, 1, 0f, 0.6f, 10, 3,null, null);
 
@@ -83,9 +88,9 @@ public class Scene {
         Material floorMaterial = new Material(Color.WHITE, 0, 32);
         Matrix4f floorTransform = new Matrix4f().identity()
                 .rotateX(Angle.toRadians(-90))
-                .scale(120, 120, 1);
+                .scale(600, 600, 1);
 
-        addObject(floorTransform, floorMaterial, modelCatalog.rectangle(16, 16), "felt");
+        addObject(floorTransform, floorMaterial, modelCatalog.rectangle(80, 80), "felt");
     }
 
     private void createLight(Vector3f light1Pos, Vector4fc lightColor, Vector4fc ambientColor, Vector4fc specularColor,
@@ -217,6 +222,10 @@ public class Scene {
         ArrayList result = new ArrayList(lights);
         result.add(playerLight);
         return result;
+    }
+
+    public List<DirectionalLight> getDirectionalLights() {
+        return directionalLights;
     }
 
     public void toggleLight(int n) {

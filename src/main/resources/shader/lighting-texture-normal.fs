@@ -41,9 +41,49 @@ uniform PointLight pointLights[NR_POINT_LIGHTS];
 
 uniform int numPointLights;
 
+struct DirectionalLight {
+    vec3 direction;
+
+    float diffusePower;
+    float specularPower;
+    float ambientPower;
+
+    vec4 ambient;
+    vec4 diffuse;
+    vec4 specular;
+};
+#define NR_DIRECTIONAL_LIGHTS 4
+uniform DirectionalLight directionalLights[NR_DIRECTIONAL_LIGHTS];
+
+uniform int numDirectionalLights;
+
 out vec4 FragColor;
 
-vec4 CalcPointLight(PointLight light, vec3 normal, vec3 FragPos, vec3 viewDir)
+vec4 CalcDirectionalLight(DirectionalLight light, vec3 FragPos)
+{
+    vec4 texColor = texture(texture1, TexCoord);
+    vec3 texNormal = texture(texture2, TexCoord).rgb;
+    texNormal = texNormal * 2.0 - 1.0;
+    texNormal = normalize(TBN * texNormal);
+
+    vec3 normal = texNormal;
+
+    vec3 lightDir = normalize(light.direction);
+    float diff = max(dot(normal, lightDir), 0.0);
+
+    vec3 reflectDir = reflect(-lightDir, normal);
+    vec3 eyeDir = normalize(cameraPos - FragPos);
+    float spec = pow(max(dot(eyeDir, reflectDir), 0.0), specularFactor);
+
+    vec4 diffuse  = diff * light.diffuse * light.diffusePower;
+    vec4 specular = spec * light.specular * light.specularPower * specularStrength;
+    vec4 ambient  = light.ambient * light.ambientPower;
+
+    vec4 result = ((ambient + diffuse) * color * texColor + specular);
+    return result;
+}
+
+vec4 CalcPointLight(PointLight light, vec3 normal, vec3 FragPos)
 {
     vec4 texColor = texture(texture1, TexCoord);
     vec3 texNormal = texture(texture2, TexCoord).rgb;
@@ -80,8 +120,13 @@ void main()
     vec4 result = vec4(0, 0, 0, 0);
     for (int i = 0; i < numPointLights; i++)
     {
-        result += CalcPointLight(pointLights[i], normal, FragPos, cameraPos);
+        result += CalcPointLight(pointLights[i], normal, FragPos);
     }
+
+    for (int i = 0; i < numDirectionalLights; i++)
+        {
+            result += CalcDirectionalLight(directionalLights[i], FragPos);
+        }
 
     FragColor = vec4(result.xyz, 1.0);
 }

@@ -176,7 +176,24 @@ public class Renderer {
             program.setFloat(prefix + "cutoffSmoothing", light.getCutoffSmoothing());
         }
 
+        List<DirectionalLight> directionalLights = scene.getDirectionalLights();
+        for (int i = 0; i < directionalLights.size(); i++) {
+            DirectionalLight light = directionalLights.get(i);
+
+            String prefix = "directionalLights[" + i + "].";
+
+            program.setVector3(prefix + "direction", light.getDirection());
+            program.setVector4(prefix + "diffuse", light.getDiffuseColor());
+            program.setVector4(prefix + "ambient", light.getAmbientColor());
+            program.setVector4(prefix + "specular", light.getSpecularColor());
+            program.setFloat(prefix + "diffusePower", light.getDiffusePower());
+            program.setFloat(prefix + "specularPower", light.getSpecularPower());
+            program.setFloat(prefix + "ambientPower", light.getAmbientPower());
+
+        }
+
         program.setInt("numPointLights", lights.size());
+        program.setInt("numDirectionalLights", directionalLights.size());
 
         program.setVector3("cameraPos", scene.getCamera().pos);
     }
