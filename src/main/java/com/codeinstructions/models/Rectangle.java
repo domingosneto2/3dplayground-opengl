@@ -30,8 +30,8 @@ public class Rectangle extends BaseModel {
         Vector2f t11 = new Vector2f(xRepeats, yRepeats);
 
 
-        Polygon polygon = new Polygon(v010, v011, v001, v000);
-        polygon.setTexCoords(Arrays.asList(t10, t11, t01, t00));
+        Polygon polygon = new Polygon(v000, v010, v011, v001);
+        polygon.setTexCoords(Arrays.asList(t00, t10, t11, t01));
         mesh.add(polygon);
 
         mesh = mesh.translate(-0.5f, -0.5f, 0);

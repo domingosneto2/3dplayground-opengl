@@ -71,7 +71,9 @@ public class Geodesic extends BaseModel {
                     }
                 } else {
                     // Convert to spherical coords
+                    // rho is radius
                     double rho = Math.sqrt(x * x + y * y + z * z);
+                    // theta is angle from x axis
                     double theta = Math.atan(y / x);
 
                     if (x == 0) {
@@ -88,7 +90,8 @@ public class Geodesic extends BaseModel {
                         theta += 2 * Math.PI;
                     }
 
-                    double phi = Math.acos(z / (rho));
+                    // phi is angle from z axis
+                    double phi = -Math.acos(z / (rho));
 
                     // Now, from spherical to texture
                     cx = theta / (2 * Math.PI);
