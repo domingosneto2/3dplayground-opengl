@@ -51,6 +51,7 @@ public class Scene {
 
     public void init() {
         Vector3f light1Pos = new Vector3f(10, 2, 10);
+        //Vector3f light1Pos = new Vector3f(0, 2, -10);
         Vector3f light2Pos = new Vector3f(-10, 5, -10);
 
         Vector4fc lightColor = Color.WHITE;
@@ -63,9 +64,9 @@ public class Scene {
         camera.moveUp(2);
         camera.back(3);
 
-        createLight(light1Pos, lightColor, ambientColor, lightColor,10f, 10f, 0f, 1f, 0.3f, 0.1f);
+        createLight(light1Pos, lightColor, ambientColor, lightColor,10f, 10f, 0f, 1f, 0.3f, 0.3f, 30f, 5);
 
-        playerLight = new Light(camera.getPos(), Color.WHITE, Color.BLACK, Color.WHITE, 0.5f, 0.5f, 0, 1, 0.3f, 0.1f, null, null);
+        playerLight = new Light(camera.getPos(), Color.WHITE, Color.BLACK, Color.WHITE, 0.5f, 0.5f, 0, 1, 0f, 0.6f, 10, 3,null, null);
 
         model = new Spiker<>(new Geodesic(4, false), 0f);
 
@@ -73,7 +74,8 @@ public class Scene {
         Matrix4f objectTransform = new Matrix4f().identity()
                 .translate(new Vector3f(0, 2, 0))
                 .rotateY((float)Math.toRadians(90))
-                .rotateX(-(float)Math.toRadians(90 - 23));
+                .rotateX(-(float)Math.toRadians(90 - 23))
+        ;
 
         Material material = new Material(Color.WHITE, 1, 128);
         addObject(objectTransform, material, model, "earth");
@@ -88,17 +90,17 @@ public class Scene {
 
     private void createLight(Vector3f light1Pos, Vector4fc lightColor, Vector4fc ambientColor, Vector4fc specularColor,
                              float diffusePower, float specularPower, float ambientPower, float attenuationConstant,
-                             float attenuationLinear, float attenuationQuadratic) {
+                             float attenuationLinear, float attenuationQuadratic, float cutoff, float cutOffSmoothing) {
         Matrix4f transform = new Matrix4f().identity().scale(0.2f);
         Model model = modelCatalog.geodesic();
         lights.add(new Light(light1Pos, lightColor, ambientColor, specularColor, diffusePower, specularPower,
-                ambientPower, attenuationConstant, attenuationLinear, attenuationQuadratic, model, transform));
+                ambientPower, attenuationConstant, attenuationLinear, attenuationQuadratic, cutoff, cutOffSmoothing, model, transform));
     }
 
     public void update() {
-        for (Light light : lights) {
-            light.getPosition().rotateY(0.5f * deltaTime);
-        }
+//        for (Light light : lights) {
+//            light.getPosition().rotateY(0.5f * deltaTime);
+//        }
 
         objects.get(0).getTransform().rotateZ((float)Math.toRadians(deltaTime * 5));
 
@@ -218,7 +220,7 @@ public class Scene {
     }
 
     public void toggleLight(int n) {
-        lights.get(n).toogle();
+        lights.get(n).toggle();
     }
 
     public void increaseLightPower() {

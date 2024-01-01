@@ -1,6 +1,7 @@
 package com.codeinstructions;
 
 import com.codeinstructions.models.Mesh;
+import com.codeinstructions.models.Rectangle;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL;
@@ -8,6 +9,7 @@ import org.lwjgl.opengl.GL;
 import java.util.List;
 
 import static org.lwjgl.opengl.GL11C.*;
+import static org.lwjgl.opengl.GL13C.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL30.GL_FRAMEBUFFER_SRGB;
 
 public class Renderer {
@@ -16,6 +18,8 @@ public class Renderer {
     private int height;
 
     private ShaderProgram program;
+
+    private ShaderProgram textureDebuggerProgram;
 
     private ShaderProgram textureProgram;
 
@@ -26,6 +30,10 @@ public class Renderer {
     private ShaderProgram lightSourceProgram;
 
     private TextureCatalog textureCatalog = new TextureCatalog();
+
+    private Texture debuggerTexture;
+
+    Mesh textureDebuggerMesh;
 
     public Renderer(int width, int height) {
         this.width = width;
@@ -38,6 +46,12 @@ public class Renderer {
         program = new ShaderProgram();
         program.loadFromResources("shader/lightingp.vs", "shader/lightingp.fs");
         program.useProgram();
+
+        textureDebuggerProgram = new ShaderProgram();
+        textureDebuggerProgram.loadFromResources("shader/texture-debugger.vs", "shader/texture-debugger.fs");
+        textureDebuggerProgram.useProgram();
+
+        textureDebuggerProgram.setInt("texture1", 0);
 
         textureProgram = new ShaderProgram();
         textureProgram.loadFromResources("shader/lighting-texture.vs", "shader/lighting-texture.fs");
@@ -65,6 +79,11 @@ public class Renderer {
         lightSourceProgram.loadFromResources("shader/lightSource.vs", "shader/lightSource.fs");
 
         textureCatalog.loadTextures();
+
+        debuggerTexture = textureCatalog.getTexture("earth").getColor();
+        Rectangle rectangle = new Rectangle(1, 1);
+        textureDebuggerMesh = rectangle.mesh();
+        textureDebuggerMesh.initializeBuffers();
 
         // set global GL state
         glClearColor(0f, 0f, 0f, 1.0f);
@@ -100,6 +119,35 @@ public class Renderer {
             Light light = lights.get(i);
             renderPointLight(light, projection, view);
         }
+
+        if (debuggerTexture != null) {
+            renderDebuggerTexture();
+        }
+    }
+
+    private void renderDebuggerTexture() {
+        glClear(GL_DEPTH_BUFFER_BIT);
+
+
+        float rectSize = 0.5f;
+        float tw = debuggerTexture.getWidth();
+        float th = debuggerTexture.getHeight();
+
+        float rectW = rectSize;
+        float rectH = rectSize * (th / tw) * ((float)width / height);
+
+        float rectX = 0.9f - rectSize * 0.5f;
+        float rectY = 0.9f - rectSize * 0.5f;
+
+        Matrix4f transform = new Matrix4f().identity()
+                .translate(rectX, rectY, 0)
+                .scale(rectW, rectH, 1);
+
+        textureDebuggerProgram.useProgram();
+        textureDebuggerProgram.setMatrix("model", transform);
+        debuggerTexture.bindToUnit(GL_TEXTURE0);
+        textureDebuggerMesh.bind();
+        glDrawArrays(GL_TRIANGLES, 0, textureDebuggerMesh.getNumVertices());
     }
 
     @NotNull
@@ -124,6 +172,8 @@ public class Renderer {
             program.setFloat(prefix + "diffusePower", light.getDiffusePower());
             program.setFloat(prefix + "specularPower", light.getSpecularPower());
             program.setFloat(prefix + "ambientPower", light.getAmbientPower());
+            program.setFloat(prefix + "cutoff", light.getCutoff());
+            program.setFloat(prefix + "cutoffSmoothing", light.getCutoffSmoothing());
         }
 
         program.setInt("numPointLights", lights.size());

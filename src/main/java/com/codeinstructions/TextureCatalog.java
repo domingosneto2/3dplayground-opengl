@@ -6,12 +6,14 @@ import java.util.Map;
 
 import static org.lwjgl.opengl.GL11C.GL_RGB;
 import static org.lwjgl.opengl.GL11C.GL_RGBA;
+import static org.lwjgl.stb.STBImage.stbi_set_flip_vertically_on_load;
 
 public class TextureCatalog {
 
     private Map<String, TextureSet> textures = new HashMap<>();
 
     public void loadTextures() throws IOException {
+        stbi_set_flip_vertically_on_load(true);
         loadTexture("felt", "fabrics_0075_color_2k.jpg", GL_RGB, "fabrics_0075_normal_opengl_2k.png", GL_RGBA);
         loadTexture("earth", "8081_earthmap10k.jpg", GL_RGB, "EarthNormal.png", GL_RGB, "8081_earthspec10k.png", GL_RGBA);
         loadTexture("sphere-test", "DXCurKn2.png", GL_RGBA);

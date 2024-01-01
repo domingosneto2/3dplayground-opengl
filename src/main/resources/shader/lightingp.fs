@@ -24,6 +24,9 @@ struct PointLight {
     float specularPower;
     float ambientPower;
 
+    float cutoff;
+    float cutoffSmoothing;
+
     vec4 ambient;
     vec4 diffuse;
     vec4 specular;
@@ -41,6 +44,10 @@ vec4 CalcPointLight(PointLight light, vec3 normal, vec3 FragPos, vec3 viewDir)
     float lightDist = length(light.position - FragPos);
     float diff = max(dot(normal, lightDir), 0.0);
 
+    float cutOffSmoothingStart = light.cutoff - light.cutoffSmoothing;
+    float cutOffFactor = 1 - clamp((lightDist - cutOffSmoothingStart) / light.cutoffSmoothing, 0, 1);
+
+
     vec3 reflectDir = reflect(-lightDir, normal);
     vec3 eyeDir = normalize(cameraPos - FragPos);
     float spec = pow(max(dot(eyeDir, reflectDir), 0.0), specularFactor);
@@ -49,7 +56,7 @@ vec4 CalcPointLight(PointLight light, vec3 normal, vec3 FragPos, vec3 viewDir)
     vec4 specular = spec * light.specular * light.specularPower * specularStrength;
     vec4 ambient  = light.ambient * light.ambientPower;
 
-    float attenuation = 1.0 / (light.constant + light.linear * lightDist + light.quadratic * lightDist * lightDist);
+    float attenuation = cutOffFactor * 1.0 / (light.constant + light.linear * lightDist + light.quadratic * lightDist * lightDist);
 
     vec4 result = ((ambient + diffuse) * color + specular) * attenuation;
     return result;

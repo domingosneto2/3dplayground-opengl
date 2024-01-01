@@ -3,7 +3,6 @@ package com.codeinstructions;
 import com.codeinstructions.models.Model;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-import org.joml.Vector4f;
 import org.joml.Vector4fc;
 
 public class Light {
@@ -27,6 +26,10 @@ public class Light {
 
     private float quadratic;
 
+    private float cutoff;
+
+    private float cutoffSmoothing;
+
     private boolean on = true;
 
     private Model model;
@@ -35,7 +38,7 @@ public class Light {
 
     public Light(Vector3f position, Vector4fc diffuseColor, Vector4fc ambientColor, Vector4fc specularColor,
                  float diffusePower, float specularPower, float ambientPower, float constant, float linear,
-                 float quadratic, Model model, Matrix4f modelTransform) {
+                 float quadratic, float cutoff, float cutoffSmoothing, Model model, Matrix4f modelTransform) {
         this.position = position;
         this.diffuseColor = diffuseColor;
         this.ambientColor = ambientColor;
@@ -46,6 +49,8 @@ public class Light {
         this.constant = constant;
         this.linear = linear;
         this.quadratic = quadratic;
+        this.cutoff = cutoff;
+        this.cutoffSmoothing = cutoffSmoothing;
         this.model = model;
         this.modelTransform = modelTransform;
     }
@@ -130,6 +135,22 @@ public class Light {
         this.quadratic = quadratic;
     }
 
+    public float getCutoff() {
+        return cutoff;
+    }
+
+    public void setCutoff(float cutoff) {
+        this.cutoff = cutoff;
+    }
+
+    public float getCutoffSmoothing() {
+        return cutoffSmoothing;
+    }
+
+    public void setCutoffSmoothing(float cutoffSmoothing) {
+        this.cutoffSmoothing = cutoffSmoothing;
+    }
+
     public Model getModel() {
         return model;
     }
@@ -138,7 +159,7 @@ public class Light {
         return modelTransform;
     }
 
-    public void toogle() {
+    public void toggle() {
         on = !on;
     }
 
