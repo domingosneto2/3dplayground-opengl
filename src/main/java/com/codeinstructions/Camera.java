@@ -84,4 +84,8 @@ public class Camera {
     public void rotateRight(float radians) {
         up.rotateAxis(radians, front.x, front.y, front.z).normalize();
     }
+
+    public Vector3f getPos() {
+        return pos;
+    }
 }

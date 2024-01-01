@@ -46,7 +46,6 @@ public class Renderer {
         textureProgram.setInt("texture1", 0);
         textureProgram.setInt("texture2", 1);
 
-
         textureNormalProgram = new ShaderProgram();
         textureNormalProgram.loadFromResources("shader/lighting-texture-normal.vs", "shader/lighting-texture-normal.fs");
         textureNormalProgram.useProgram();
@@ -66,7 +65,6 @@ public class Renderer {
         lightSourceProgram.loadFromResources("shader/lightSource.vs", "shader/lightSource.fs");
 
         textureCatalog.loadTextures();
-
 
         // set global GL state
         glClearColor(0f, 0f, 0f, 1.0f);
@@ -134,6 +132,9 @@ public class Renderer {
     }
 
     private void renderPointLight(Light light, Matrix4f projection, Matrix4f view) {
+        if (light.getModel() == null) {
+            return;
+        }
         Matrix4f modelTransform = new Matrix4f();
         modelTransform.translate(light.getPosition());
         modelTransform.mul(light.getModelTransform());
@@ -179,7 +180,6 @@ public class Renderer {
 
         Mesh mesh = gameObject.mesh();
 
-
         program.setMatrix("model", modelTransform);
         Matrix4f normal = new Matrix4f(modelTransform).normal();
         program.setMatrix("normal", normal);
@@ -190,8 +190,6 @@ public class Renderer {
         program.setFloat("specularStrength", material.getSpecularStrength());
         program.setFloat("specularFactor", material.getSpecularFactor());
 
-        // debugTBN(mesh, modelTransform);
-
         mesh.bind();
 
         if (mesh.hasIndices()) {
@@ -200,7 +198,6 @@ public class Renderer {
             glDrawArrays(GL_TRIANGLES, 0, mesh.getNumVertices());
         }
     }
-
 
     public void clear() {
         program.deleteProgram();

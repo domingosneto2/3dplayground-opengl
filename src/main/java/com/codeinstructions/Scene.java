@@ -17,6 +17,8 @@ public class Scene {
     private List<Light> lights = new ArrayList<>();
     private List<GameObject> objects = new ArrayList<>();
 
+    private Light playerLight;
+
     private float lastTime;
 
     private float deltaTime;
@@ -62,12 +64,10 @@ public class Scene {
         camera.back(3);
 
         createLight(light1Pos, lightColor, ambientColor, lightColor,10f, 10f, 0f, 1f, 0.3f, 0.1f);
-        //createLight(light2Pos, lightColor2, ambientColor2, lightColor,5f, 5f, 1f, 1f, 0.3f, 0.1f);
+
+        playerLight = new Light(camera.getPos(), Color.WHITE, Color.BLACK, Color.WHITE, 0.5f, 0.5f, 0, 1, 0.3f, 0.1f, null, null);
 
         model = new Spiker<>(new Geodesic(4, false), 0f);
-        //model = new Spiker<>(new Torus(50, 50, 0.3f), 0f);
-        //model = new Spiker<>(new Sphere(20, 40), 0f);
-        //model = new Spiker<>(new Icosahedron(), 0f);
 
 
         Matrix4f objectTransform = new Matrix4f().identity()
@@ -96,11 +96,11 @@ public class Scene {
     }
 
     public void update() {
-//        for (Light light : lights) {
-//            light.getPosition().rotateY(0.5f * deltaTime);
-//        }
+        for (Light light : lights) {
+            light.getPosition().rotateY(0.5f * deltaTime);
+        }
 
-        // objects.get(0).getTransform().rotateZ((float)Math.toRadians(deltaTime * 10));
+        objects.get(0).getTransform().rotateZ((float)Math.toRadians(deltaTime * 5));
 
         model.setSpikeDelta(spikeLength);
     }
@@ -212,7 +212,9 @@ public class Scene {
     }
 
     public List<Light> getLights() {
-        return lights;
+        ArrayList result = new ArrayList(lights);
+        result.add(playerLight);
+        return result;
     }
 
     public void toggleLight(int n) {

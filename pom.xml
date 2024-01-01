@@ -161,12 +161,12 @@
         </profile>
     </profiles>
     <build>
-        <sourceDirectory>src</sourceDirectory>
-        <resources>
-            <resource>
-                <directory>res</directory>
-            </resource>
-        </resources>
+<!--        <sourceDirectory>src</sourceDirectory>-->
+<!--        <resources>-->
+<!--            <resource>-->
+<!--                <directory>res</directory>-->
+<!--            </resource>-->
+<!--        </resources>-->
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
