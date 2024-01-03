@@ -11,9 +11,6 @@ uniform sampler2D texture1;
 uniform sampler2D texture2;
 
 uniform vec4 color;
-uniform vec3 lightPos;
-uniform vec4 lightColor;
-uniform vec4 ambientColor;
 uniform vec3 cameraPos;
 uniform float specularStrength;
 uniform float specularFactor;
@@ -36,6 +33,7 @@ struct PointLight {
     vec4 diffuse;
     vec4 specular;
 };
+
 #define NR_POINT_LIGHTS 4
 uniform PointLight pointLights[NR_POINT_LIGHTS];
 
@@ -59,15 +57,8 @@ uniform int numDirectionalLights;
 
 out vec4 FragColor;
 
-vec4 CalcDirectionalLight(DirectionalLight light, vec3 FragPos)
+vec4 CalcDirectionalLight(DirectionalLight light, vec4 matColor, vec3 normal, vec4 matSpecular)
 {
-    vec4 texColor = texture(texture1, TexCoord);
-    vec3 texNormal = texture(texture2, TexCoord).rgb;
-    texNormal = texNormal * 2.0 - 1.0;
-    texNormal = normalize(TBN * texNormal);
-
-    vec3 normal = texNormal;
-
     vec3 lightDir = normalize(light.direction);
     float diff = max(dot(normal, lightDir), 0.0);
 
@@ -76,22 +67,16 @@ vec4 CalcDirectionalLight(DirectionalLight light, vec3 FragPos)
     float spec = pow(max(dot(eyeDir, reflectDir), 0.0), specularFactor);
 
     vec4 diffuse  = diff * light.diffuse * light.diffusePower;
-    vec4 specular = spec * light.specular * light.specularPower * specularStrength;
+    vec4 specular = spec * light.specular * light.specularPower * specularStrength * matSpecular;
     vec4 ambient  = light.ambient * light.ambientPower;
 
-    vec4 result = ((ambient + diffuse) * color * texColor + specular);
+    vec4 result = ((ambient + diffuse) * color * matColor + specular);
     return result;
 }
 
-vec4 CalcPointLight(PointLight light, vec3 normal, vec3 FragPos)
+
+vec4 CalcPointLight(PointLight light, vec4 color, vec3 normal, vec4 matSpecular)
 {
-    vec4 texColor = texture(texture1, TexCoord);
-    vec3 texNormal = texture(texture2, TexCoord).rgb;
-    texNormal = texNormal * 2.0 - 1.0;
-    texNormal = normalize(TBN * texNormal);
-
-    normal = texNormal;
-
     vec3 lightDir = normalize(light.position - FragPos);
     float lightDist = length(light.position - FragPos);
     float diff = max(dot(normal, lightDir), 0.0);
@@ -104,29 +89,35 @@ vec4 CalcPointLight(PointLight light, vec3 normal, vec3 FragPos)
     float spec = pow(max(dot(eyeDir, reflectDir), 0.0), specularFactor);
 
     vec4 diffuse  = diff * light.diffuse * light.diffusePower;
-    vec4 specular = spec * light.specular * light.specularPower * specularStrength;
+    vec4 specular = spec * light.specular * light.specularPower * specularStrength * matSpecular;
     vec4 ambient  = light.ambient * light.ambientPower;
 
     float attenuation = cutOffFactor * 1.0 / (light.constant + light.linear * lightDist + light.quadratic * lightDist * lightDist);
 
-    vec4 result = ((ambient + diffuse) * color * texColor + specular) * attenuation;
+    vec4 result = ((ambient + diffuse) * color + specular) * attenuation;
     return result;
 }
-
 void main()
 {
-    vec3 normal = normalize(MyNormal);;
+    float gamma = 2.2;
+    vec4 texColor = texture(texture1, TexCoord) * color;
+    texColor = pow(texColor, vec4(gamma));
+    vec3 texNormal = texture(texture2, TexCoord).rgb;
+    // No specular map.  Assuming 1 will make it use the material specular strength only.
+    vec4 texSpecular = vec4(1,1,1,1);
+    texNormal = texNormal * 2.0 - 1.0;
+    texNormal = normalize(TBN * texNormal);
 
     vec4 result = vec4(0, 0, 0, 0);
     for (int i = 0; i < numPointLights; i++)
     {
-        result += CalcPointLight(pointLights[i], normal, FragPos);
+        result += CalcPointLight(pointLights[i], texColor, texNormal, texSpecular);
     }
 
     for (int i = 0; i < numDirectionalLights; i++)
-        {
-            result += CalcDirectionalLight(directionalLights[i], FragPos);
-        }
+    {
+        result += CalcDirectionalLight(directionalLights[i], texColor, texNormal, texSpecular);
+    }
 
-    FragColor = vec4(result.xyz, 1.0);
+    FragColor = pow(vec4(result.xyz, 1.0), vec4(1/gamma));
 }

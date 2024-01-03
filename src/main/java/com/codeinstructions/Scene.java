@@ -67,7 +67,7 @@ public class Scene {
         camera.moveUp(2);
         camera.back(3);
 
-        createLight(light1Pos, lightColor, ambientColor, lightColor,10f, 10f, 0f, 1f, 0.3f, 0.3f, 30f, 5);
+        createLight(light1Pos, lightColor, ambientColor, lightColor,120f, 120f, 0f, 1f, 0f, 1f, 30f, 5);
 
         //directionalLights.add(new DirectionalLight(light1Pos, lightColor, lightColor, lightColor, 1, 1, 0.001f, true));
 
@@ -117,7 +117,9 @@ public class Scene {
         lastTime = (float)time;
     }
 
-    float acceleration = 0.5f;
+    float jerk = 2f;
+
+    float acceleration = 0;
     float maxSpeed = 5f;
 
     float vSpeed = 0;
@@ -134,6 +136,7 @@ public class Scene {
                 if (hSpeed < 0) {
                     hSpeed = 0;
                 }
+                acceleration += jerk * deltaTime;
                 hSpeed += acceleration * deltaTime;
                 if (hSpeed > maxSpeed) {
                     hSpeed = maxSpeed;
@@ -144,12 +147,14 @@ public class Scene {
             if (hSpeed > 0) {
                 hSpeed = 0;
             }
+            acceleration += jerk * deltaTime;
             hSpeed -= acceleration * deltaTime;
             if (hSpeed < -maxSpeed) {
                 hSpeed = -maxSpeed;
             }
             camera.back(-hSpeed * deltaTime);
         } else {
+            acceleration = 0;
             hSpeed = 0;
         }
 

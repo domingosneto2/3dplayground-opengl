@@ -10,7 +10,6 @@ import java.util.List;
 
 import static org.lwjgl.opengl.GL11C.*;
 import static org.lwjgl.opengl.GL13C.GL_TEXTURE0;
-import static org.lwjgl.opengl.GL30.GL_FRAMEBUFFER_SRGB;
 
 public class Renderer {
     private int width;
@@ -89,7 +88,6 @@ public class Renderer {
         glClearColor(0f, 0f, 0f, 1.0f);
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
-        glEnable(GL_FRAMEBUFFER_SRGB);
     }
 
     public void render(Scene scene) {

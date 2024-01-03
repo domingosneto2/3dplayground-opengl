@@ -18,6 +18,7 @@ public class Main {
     public static void main(String[] args) throws Exception {
         if (!glfwInit())
             throw new AssertionError("Unable to initialize GLFW");
+
         glfwDefaultWindowHints();
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -25,6 +26,8 @@ public class Main {
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+        glfwWindowHint(GLFW_SAMPLES, 4);
+
 
         long window = glfwCreateWindow(renderer.getWidth(), renderer.getHeight(), "3D Playground!", NULL, NULL);
         if (window == NULL) {
