@@ -2,8 +2,10 @@
 
 // Fragment Shader for Phong lighting model - No texture support.
 
-in vec3 FragPos;
-in vec3 MyNormal;
+in VS_OUT {
+    vec3 FragPos;
+    vec3 MyNormal;
+} fs_in;
 
 uniform vec4 color;
 uniform vec3 cameraPos;
@@ -52,13 +54,13 @@ uniform int numDirectionalLights;
 
 out vec4 FragColor;
 
-vec4 CalcDirectionalLight(DirectionalLight light, vec4 matColor, vec3 normal, vec4 matSpecular)
+vec4 CalcDirectionalLight(vec3 wsPos, DirectionalLight light, vec4 matColor, vec3 normal, vec4 matSpecular)
 {
     vec3 lightDir = normalize(light.direction);
     float diff = max(dot(normal, lightDir), 0.0);
 
     vec3 reflectDir = reflect(-lightDir, normal);
-    vec3 eyeDir = normalize(cameraPos - FragPos);
+    vec3 eyeDir = normalize(cameraPos - wsPos);
     float spec = pow(max(dot(eyeDir, reflectDir), 0.0), specularFactor);
 
     vec4 diffuse  = diff * light.diffuse * light.diffusePower;
@@ -70,17 +72,17 @@ vec4 CalcDirectionalLight(DirectionalLight light, vec4 matColor, vec3 normal, ve
 }
 
 
-vec4 CalcPointLight(PointLight light, vec4 color, vec3 normal, vec4 matSpecular)
+vec4 CalcPointLight(vec3 wsPos, PointLight light, vec4 color, vec3 normal, vec4 matSpecular)
 {
-    vec3 lightDir = normalize(light.position - FragPos);
-    float lightDist = length(light.position - FragPos);
+    vec3 lightDir = normalize(light.position - wsPos);
+    float lightDist = length(light.position - wsPos);
     float diff = max(dot(normal, lightDir), 0.0);
 
     float cutOffSmoothingStart = light.cutoff - light.cutoffSmoothing;
     float cutOffFactor = 1 - clamp((lightDist - cutOffSmoothingStart) / light.cutoffSmoothing, 0, 1);
 
     vec3 reflectDir = reflect(-lightDir, normal);
-    vec3 eyeDir = normalize(cameraPos - FragPos);
+    vec3 eyeDir = normalize(cameraPos - wsPos);
     float spec = pow(max(dot(eyeDir, reflectDir), 0.0), specularFactor);
 
     vec4 diffuse  = diff * light.diffuse * light.diffusePower;
@@ -102,12 +104,12 @@ void main()
     vec4 result = vec4(0, 0, 0, 0);
     for (int i = 0; i < numPointLights; i++)
     {
-        result += CalcPointLight(pointLights[i], color, MyNormal, texSpecular);
+        result += CalcPointLight(fs_in.FragPos, pointLights[i], color, fs_in.MyNormal, texSpecular);
     }
 
     for (int i = 0; i < numDirectionalLights; i++)
     {
-        result += CalcDirectionalLight(directionalLights[i], color, MyNormal, texSpecular);
+        result += CalcDirectionalLight(fs_in.FragPos, directionalLights[i], color, fs_in.MyNormal, texSpecular);
     }
 
     FragColor = pow(vec4(result.xyz, 1.0), vec4(1/gamma));

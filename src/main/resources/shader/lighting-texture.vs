@@ -11,14 +11,19 @@ uniform mat4 view;
 uniform mat4 projection;
 uniform mat4 normal;
 
-out vec3 FragPos;
-out vec3 MyNormal;
-out vec2 TexCoord;
+out VS_OUT {
+    // Vertex position in world space.
+    vec3 FragPos;
+    // Vertex normal in world space.
+    vec3 MyNormal;
+    // Just passes through the texture coordinates
+    vec2 TexCoord;
+} vs_out;
 
 void main()
 {
     gl_Position = projection * view * model * vec4(aPos, 1.0);
-    FragPos = vec3(model * vec4(aPos, 1));
-    MyNormal = normalize(vec3(normal * vec4(aNormal, 0)));
-    TexCoord = aTexCoord;
+    vs_out.FragPos = vec3(model * vec4(aPos, 1));
+    vs_out.MyNormal = normalize(vec3(normal * vec4(aNormal, 0)));
+    vs_out.TexCoord = aTexCoord;
 }
